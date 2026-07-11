@@ -28,6 +28,7 @@ pytest-httpx = ">=0.24.0"
 
 
 [tool.semantic_release]
+tag_format = "{version}"
 version_toml = [
   "pyproject.toml:tool.poetry.version"
 ]
