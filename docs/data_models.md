@@ -318,55 +318,23 @@ switch_entity = {
     "state": "on" | "off",
     "attributes": {
         "assumed_state": False,
-        "friendly_name": "Charger",
+        "friendly_name": "Polling",
         "vehicle_name": "My Tesla",
     }
 }
 ```
 
-### Climate Attributes
+> The only switch as of v5.0.0 is the local **Polling** switch; it does not
+> command the vehicle.
 
-```python
-climate_entity = {
-    "state": "heat" | "cool" | "auto" | "off",
-    "attributes": {
-        "current_temperature": 20.5,
-        "target_temperature": 22.0,
-        "min_temp": 15,
-        "max_temp": 29,
-        "fan_mode": "auto",
-        "hvac_modes": ["heat", "cool", "auto", "off"],
-        "preset_mode": "none",
-        "preset_modes": ["none", "defrost", "keep_on", "dog_mode", "camp_mode"],
-    }
-}
-```
+### Removed Entity Attribute Models (v5.0.0)
 
-### Cover Attributes
-
-```python
-cover_entity = {
-    "state": "open" | "closed",
-    "attributes": {
-        "device_class": "door",
-        "friendly_name": "Frunk",
-        "supported_features": 3,  # OPEN | CLOSE
-    }
-}
-```
-
-### Lock Attributes
-
-```python
-lock_entity = {
-    "state": "locked" | "unlocked",
-    "attributes": {
-        "device_class": "door",
-        "friendly_name": "Door Lock",
-        "supported_features": 3,  # LOCK | UNLOCK
-    }
-}
-```
+> The **Climate**, **Cover** and **Lock** entities were removed in v5.0.0
+> because controlling them requires Tesla's signed vehicle-command protocol.
+> The underlying state is still read from the vehicle schema below and exposed
+> through read-only sensors and binary sensors (e.g. `TeslaCarClimateOn`,
+> `TeslaCarFrunk`/`TeslaCarTrunk`/`TeslaCarSunRoof`, `TeslaCarDoorsLock`,
+> `TeslaCarChargePortLatch`).
 
 ---
 

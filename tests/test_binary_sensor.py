@@ -234,3 +234,91 @@ async def test_car_user_present(hass: HomeAssistant) -> None:
     assert state.state == STATE_OFF
 
     assert state.attributes.get("user_id") == str(car_mock_data.VEHICLE_DATA["user_id"])
+
+
+async def test_doors_lock_status(hass: HomeAssistant) -> None:
+    """Tests the read-only doors lock status sensor."""
+    await setup_platform(hass, BINARY_SENSOR_DOMAIN)
+
+    state = hass.states.get("binary_sensor.my_model_s_doors_lock")
+    # locked is False in mock data, LOCK device class -> on means unlocked
+    assert state.state == STATE_ON
+    assert state.attributes.get(ATTR_DEVICE_CLASS) == BinarySensorDeviceClass.LOCK
+
+
+async def test_charge_port_latch_status(hass: HomeAssistant) -> None:
+    """Tests the read-only charge port latch status sensor."""
+    await setup_platform(hass, BINARY_SENSOR_DOMAIN)
+
+    state = hass.states.get("binary_sensor.my_model_s_charge_port_latch")
+    # charge_port_latch is "Engaged" -> off means engaged/locked
+    assert state.state == STATE_OFF
+    assert state.attributes.get(ATTR_DEVICE_CLASS) == BinarySensorDeviceClass.LOCK
+
+
+async def test_charge_port_door_status(hass: HomeAssistant) -> None:
+    """Tests the read-only charge port door status sensor."""
+    await setup_platform(hass, BINARY_SENSOR_DOMAIN)
+
+    state = hass.states.get("binary_sensor.my_model_s_charge_port_door")
+    # charge_port_door_open is True
+    assert state.state == STATE_ON
+    assert state.attributes.get(ATTR_DEVICE_CLASS) == BinarySensorDeviceClass.OPENING
+
+
+async def test_frunk_status(hass: HomeAssistant) -> None:
+    """Tests the read-only frunk status sensor."""
+    await setup_platform(hass, BINARY_SENSOR_DOMAIN)
+
+    state = hass.states.get("binary_sensor.my_model_s_frunk")
+    # ft is 0 -> closed
+    assert state.state == STATE_OFF
+    assert state.attributes.get(ATTR_DEVICE_CLASS) == BinarySensorDeviceClass.OPENING
+
+
+async def test_trunk_status(hass: HomeAssistant) -> None:
+    """Tests the read-only trunk status sensor."""
+    await setup_platform(hass, BINARY_SENSOR_DOMAIN)
+
+    state = hass.states.get("binary_sensor.my_model_s_trunk")
+    # rt is 0 -> closed
+    assert state.state == STATE_OFF
+    assert state.attributes.get(ATTR_DEVICE_CLASS) == BinarySensorDeviceClass.OPENING
+
+
+async def test_sunroof_status(hass: HomeAssistant) -> None:
+    """Tests the read-only sunroof status sensor."""
+    await setup_platform(hass, BINARY_SENSOR_DOMAIN)
+
+    state = hass.states.get("binary_sensor.my_model_s_sunroof")
+    # sun_roof_state is "closed"
+    assert state.state == STATE_OFF
+    assert state.attributes.get(ATTR_DEVICE_CLASS) == BinarySensorDeviceClass.OPENING
+
+
+async def test_sentry_mode_status(hass: HomeAssistant) -> None:
+    """Tests the read-only sentry mode status sensor."""
+    car_mock_data.VEHICLE_DATA["vehicle_state"]["sentry_mode_available"] = True
+    car_mock_data.VEHICLE_DATA["vehicle_state"]["sentry_mode"] = True
+    await setup_platform(hass, BINARY_SENSOR_DOMAIN)
+
+    state = hass.states.get("binary_sensor.my_model_s_sentry_mode")
+    assert state.state == STATE_ON
+
+
+async def test_valet_mode_status(hass: HomeAssistant) -> None:
+    """Tests the read-only valet mode status sensor."""
+    await setup_platform(hass, BINARY_SENSOR_DOMAIN)
+
+    state = hass.states.get("binary_sensor.my_model_s_valet_mode")
+    # valet_mode is False
+    assert state.state == STATE_OFF
+
+
+async def test_climate_status(hass: HomeAssistant) -> None:
+    """Tests the read-only climate status sensor."""
+    await setup_platform(hass, BINARY_SENSOR_DOMAIN)
+
+    state = hass.states.get("binary_sensor.my_model_s_climate")
+    # is_climate_on is False
+    assert state.state == STATE_OFF

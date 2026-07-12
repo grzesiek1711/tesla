@@ -31,18 +31,16 @@ tesla/
 │   ├── util.py                           # Utilities (SSL context)
 │   ├── teslamate.py                      # TeslaMate MQTT integration (optional)
 │   │
-│   ├── sensor.py                         # Sensor entities (15 classes)
-│   ├── binary_sensor.py                  # Binary sensors (10 classes)
-│   ├── switch.py                         # Switches (5 classes)
-│   ├── climate.py                        # Climate/HVAC (1 class)
-│   ├── cover.py                          # Covers/doors/windows (5 classes)
-│   ├── button.py                         # Buttons/actions (7 classes)
-│   ├── lock.py                           # Locks (2 classes)
-│   ├── select.py                         # Select/option entities (3 classes)
-│   ├── number.py                         # Number/value setters (2 classes)
+│   ├── sensor.py                         # Sensor entities (read-only)
+│   ├── binary_sensor.py                  # Binary sensors (read-only status)
+│   ├── switch.py                         # Switch (local polling only)
+│   ├── button.py                         # Buttons (wake up, force data update)
 │   ├── device_tracker.py                 # Location tracking (2 classes)
-│   ├── update.py                         # Software update entity (1 class)
-│   ├── text.py                           # Text input (1 class)
+│   ├── update.py                         # Software update entity (read-only)
+│   ├── text.py                           # Text input (TeslaMate ID)
+│   │                                     # NOTE: climate.py, cover.py, lock.py,
+│   │                                     # select.py and number.py were removed
+│   │                                     # in v5.0.0 (required command signing)
 │   │
 │   ├── manifest.json                     # Home Assistant integration metadata
 │   └── strings.json                      # Internationalization strings
@@ -118,26 +116,29 @@ TeslaBaseEntity
 - Update listener callback mechanism
 - Home Assistant entity registration
 
-**Usage**: All 54 entity classes inherit from these bases.
+**Usage**: All entity classes inherit from these bases.
 
 ### 3. Platform Modules (Entity Types)
 
-**Pattern**: Each file (e.g., `sensor.py`, `switch.py`) implements `async_setup_entry()` which creates entities for its domain.
+**Pattern**: Each file (e.g., `sensor.py`, `binary_sensor.py`) implements `async_setup_entry()` which creates entities for its domain.
 
-**54 Total Entity Classes**:
+**Entity Classes (read-only, v5.0.0)**:
 
-- Sensors: 15 classes (battery, temperature, range, charging, etc.)
-- Binary Sensors: 10 classes (online, charging, doors, etc.)
-- Switches: 5 classes (charger, sentry, polling, etc.)
-- Climate: 1 class (HVAC)
-- Covers: 5 classes (frunk, trunk, windows, etc.)
-- Buttons: 7 classes (horn, flash, wake, etc.)
-- Locks: 2 classes (doors, charge port)
-- Selects: 3 classes (seat heaters, steering wheel, cabin overheat protection)
-- Numbers: 2 classes (charge limit, charging amps)
+- Sensors: 28 classes (battery, temperature, range, charging, charge limit/amps,
+  voltage/current, climate status, seat heater levels, speed, power, heading, etc.)
+- Binary Sensors: 23 classes (online, charging, doors, locks, charge port, frunk,
+  trunk, sunroof, sentry, valet, climate, preconditioning, defrosters, etc.)
+- Switches: 1 class (local polling only)
+- Buttons: 2 classes (wake up, force data update)
 - Device Tracker: 2 classes (location, destination)
-- Update: 1 class (software version)
+- Update: 1 class (software version, read-only)
 - Text: 1 class (TeslaMate ID)
+
+> **Removed in v5.0.0** (required Tesla's signed vehicle-command protocol):
+> `climate`, `cover`, `lock`, `select` and `number` platforms, plus the command
+> switches (charger, sentry, valet, heated steering wheel) and command buttons
+> (horn, flash lights, HomeLink, remote start, boombox). Readable state was
+> moved to the sensors/binary sensors above.
 
 ### 4. Configuration: `config_flow.py`
 
@@ -433,13 +434,11 @@ The project includes a Docker dev container (`.devcontainer/`):
 | `__init__.py`      | 588   | Coordinator, setup, config entry handling |
 | `base.py`          | 149   | Entity base classes                       |
 | `config_flow.py`   | 314   | OAuth, config UI, options                 |
-| `sensor.py`        | 668   | 15 sensor classes                         |
-| `binary_sensor.py` | 300   | 10 binary sensor classes                  |
-| `select.py`        | 460   | 3 select option classes                   |
-| `switch.py`        | 189   | 5 switch classes                          |
-| `cover.py`         | 209   | 5 cover/door classes                      |
-| `climate.py`       | 173   | HVAC control                              |
-| `button.py`        | 153   | 7 action button classes                   |
+| `sensor.py`        | ~900  | 28 sensor classes (read-only)             |
+| `binary_sensor.py` | ~560  | 23 binary sensor classes (read-only)      |
+| `switch.py`        | 67    | 1 switch class (local polling only)       |
+| `button.py`        | 69    | 2 buttons (wake up, force data update)    |
+| `update.py`        | ~130  | Software update status (read-only)        |
 | `teslamate.py`     | 380   | MQTT integration                          |
 | `services.py`      | 177   | Custom services                           |
 
@@ -450,7 +449,7 @@ The project includes a Docker dev container (`.devcontainer/`):
 | Property           | Value         |
 | ------------------ | ------------- |
 | **Domain**         | tesla_custom  |
-| **Version**        | 4.0.0         |
+| **Version**        | 5.0.0         |
 | **Min HA Version** | 2024.11.0     |
 | **License**        | Apache-2.0    |
 | **Maintainer**     | @alandtse     |

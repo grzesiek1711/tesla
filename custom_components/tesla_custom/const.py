@@ -1,6 +1,6 @@
 """Const file for Tesla cars."""
 
-VERSION = "4.0.0"
+VERSION = "5.0.0"
 CONF_EXPIRATION = "expiration"
 CONF_INCLUDE_VEHICLES = "include_vehicles"
 CONF_POLLING_POLICY = "polling_policy"
@@ -15,18 +15,17 @@ DEFAULT_ENABLE_TESLAMATE = False
 ERROR_URL_NOT_DETECTED = "url_not_detected"
 MIN_SCAN_INTERVAL = 10
 
+# Command platforms that require Tesla's signed vehicle-command protocol
+# (lock, climate, cover, select, number) have been removed. This integration
+# is read-only apart from the local polling controls, the wake up command and
+# force data update, which do not require a signing certificate.
 PLATFORMS = [
     "sensor",
-    "lock",
-    "climate",
-    "cover",
     "binary_sensor",
     "device_tracker",
     "switch",
     "button",
-    "select",
     "update",
-    "number",
     "text",
 ]
 

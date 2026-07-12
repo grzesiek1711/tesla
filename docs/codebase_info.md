@@ -3,7 +3,7 @@
 ## Project Overview
 
 **Name**: Tesla Custom Integration  
-**Version**: 4.0.0  
+**Version**: 5.0.0  
 **License**: Apache-2.0  
 **Repository**: https://github.com/alandtse/tesla  
 **Domain**: Home Assistant custom component for Tesla vehicles
@@ -12,11 +12,20 @@ This is a fork of the official Home Assistant Tesla integration, maintained as a
 
 ## Purpose
 
-Provides comprehensive Home Assistant integration for:
+Provides read-only Home Assistant monitoring for:
 
-- **Tesla Vehicles**: Real-time state, climate control, charging, vehicle commands
+- **Tesla Vehicles**: Real-time state, climate status, charging status, location
 
 The integration uses cloud polling with intelligent sleep strategies to minimize battery drain while keeping data current.
+
+> **Note (v5.0.0): read-only integration.** Sending commands to the vehicle
+> (lock/unlock, climate control, opening the trunk/frunk/windows, charge
+> start/stop, etc.) now requires Tesla's signed vehicle-command protocol and a
+> signing certificate, which this integration does not use. The `climate`,
+> `cover`, `lock`, `select` and `number` platforms and the command
+> switches/buttons were removed; readable state is exposed via sensors and
+> binary sensors. Only **wake up** and **force data update** actions and a
+> local **polling** switch remain.
 
 ## Technology Stack
 
@@ -37,7 +46,7 @@ Lines of Code: 8,713
 Programming Language: Python (100%)
 
 Component Breakdown:
-- Core Integration: 19 Python modules
+- Core Integration: 14 Python modules
 - Tests: 13 test modules
 - Mock Data: 1 mock data module
 - Configuration: 5+ config/manifest files
@@ -56,18 +65,16 @@ tesla/
 │   ├── teslamate.py                    # TeslaMate MQTT integration
 │   ├── util.py                         # Utilities (SSL context)
 │   │
-│   ├── sensor.py                       # Sensor entities
-│   ├── binary_sensor.py                # Binary sensor entities
-│   ├── switch.py                       # Switch entities
-│   ├── climate.py                      # Climate entity
-│   ├── cover.py                        # Cover entities
-│   ├── button.py                       # Button entities
-│   ├── lock.py                         # Lock entities
-│   ├── select.py                       # Select entities
-│   ├── number.py                       # Number entities
+│   ├── sensor.py                       # Sensor entities (28 classes)
+│   ├── binary_sensor.py                # Binary sensor entities (23 classes)
+│   ├── switch.py                       # Switch entity (local polling only)
+│   ├── button.py                       # Button entities (wake up, force update)
 │   ├── device_tracker.py               # Device tracker entities
-│   ├── update.py                       # Update entity
+│   ├── update.py                       # Update entity (read-only)
 │   ├── text.py                         # Text entity
+│   │                                   # NOTE: climate.py, cover.py, lock.py,
+│   │                                   # select.py and number.py were removed
+│   │                                   # in v5.0.0 (required command signing)
 │   │
 │   ├── manifest.json                   # Home Assistant manifest
 │   └── strings.json                    # i18n strings (if exists)
@@ -141,19 +148,19 @@ The central hub for all data operations:
 ```
 TeslaBaseEntity (common methods & properties)
 └── TeslaCarEntity (vehicle-specific)
-    ├── Climate (HVAC control)
-    ├── Covers (frunk, trunk, windows, sunroof)
-    ├── Sensors (battery, temperature, range, etc.)
-    ├── Switches (charger, sentry, polling, etc.)
-    ├── Buttons (horn, flash, wake, etc.)
-    ├── Binary Sensors (charging, online, etc.)
-    ├── Locks (doors, charge port)
-    ├── Selects (seat heaters, overheat protection)
-    ├── Numbers (charge limit, amps)
-    ├── Device Tracker (location)
-    ├── Update (software version)
+    ├── Sensors (battery, temperature, range, charging, climate status, etc.)
+    ├── Binary Sensors (charging, online, doors, locks, sentry, climate, etc.)
+    ├── Switch (polling, local only)
+    ├── Buttons (wake up, force data update)
+    ├── Device Tracker (location, route destination)
+    ├── Update (software version, read-only)
     └── Text (TeslaMate ID)
 ```
+
+> **Removed in v5.0.0**: `Climate`, `Covers`, `Locks`, `Selects` and `Numbers`
+> entity classes, plus the command switches (charger, sentry, valet, heated
+> steering wheel) and command buttons (horn, flash lights, HomeLink, remote
+> start, boombox). These required Tesla's signed vehicle-command protocol.
 
 ## Development Tools & Configuration
 
@@ -247,7 +254,7 @@ prospector                # Full linting
 ### Tesla API (via teslajsonpy)
 
 - OAuth 2.0 token-based authentication
-- REST API for vehicle commands and state
+- REST API for reading vehicle state (read-only; commands require signing)
 - Polling interval configurable (default: 660 seconds)
 
 ### MQTT Integration (via TeslaMate)
@@ -261,10 +268,10 @@ prospector                # Full linting
 - Entity creation and lifecycle management
 - Config entry system for credential storage
 - Data coordinator pattern for update coordination
-- Service registration for custom commands
+- Service registration for runtime configuration (e.g., update interval)
 
 ---
 
 **Integration Class**: Home Assistant Custom Component  
 **Code Quality**: Type hints throughout, async/await patterns, comprehensive tests  
-**Maintenance**: Active (version 4.0.0 as of latest documentation)
+**Maintenance**: Active (version 5.0.0 as of latest documentation)

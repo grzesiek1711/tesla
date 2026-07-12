@@ -33,6 +33,21 @@ async def async_setup_entry(hass: HomeAssistant, config_entry, async_add_entitie
         entities.append(TeslaCarScheduledCharging(car, coordinator))
         entities.append(TeslaCarScheduledDeparture(car, coordinator))
         entities.append(TeslaCarUserPresent(car, coordinator))
+        # Status sensors converted from former command entities. These are
+        # read-only and do not require Tesla's signed vehicle-command protocol.
+        entities.append(TeslaCarDoorsLock(car, coordinator))
+        entities.append(TeslaCarChargePortLatch(car, coordinator))
+        entities.append(TeslaCarChargePortDoor(car, coordinator))
+        entities.append(TeslaCarFrunk(car, coordinator))
+        entities.append(TeslaCarTrunk(car, coordinator))
+        entities.append(TeslaCarSunRoof(car, coordinator))
+        entities.append(TeslaCarSentryMode(car, coordinator))
+        entities.append(TeslaCarValetMode(car, coordinator))
+        entities.append(TeslaCarClimateOn(car, coordinator))
+        entities.append(TeslaCarPreconditioning(car, coordinator))
+        entities.append(TeslaCarBatteryHeater(car, coordinator))
+        entities.append(TeslaCarFrontDefroster(car, coordinator))
+        entities.append(TeslaCarRearDefroster(car, coordinator))
 
     async_add_entities(entities, update_before_add=True)
 
@@ -265,3 +280,251 @@ class TeslaCarUserPresent(TeslaCarEntity, BinarySensorEntity):
         user_id = str(self._car._vehicle_data.get("user_id"))
 
         return {"user_id": user_id}
+
+
+class TeslaCarDoorsLock(TeslaCarEntity, BinarySensorEntity):
+    """Representation of a Tesla car door lock status sensor.
+
+    Read-only replacement for the removed lock entity. For the LOCK device
+    class, ``on`` means unlocked and ``off`` means locked.
+    """
+
+    type = "doors lock"
+    _attr_device_class = BinarySensorDeviceClass.LOCK
+    _attr_icon = "mdi:car-door-lock"
+
+    @property
+    def is_on(self):
+        """Return True if car is unlocked."""
+        if self._car.is_locked is None:
+            return None
+        return not self._car.is_locked
+
+
+class TeslaCarChargePortLatch(TeslaCarEntity, BinarySensorEntity):
+    """Representation of a Tesla charge port latch status sensor.
+
+    Read-only replacement for the removed charge port latch lock entity. For
+    the LOCK device class, ``on`` means unlatched and ``off`` means engaged.
+    """
+
+    type = "charge port latch"
+    _attr_device_class = BinarySensorDeviceClass.LOCK
+    _attr_icon = "mdi:ev-plug-tesla"
+
+    @property
+    def is_on(self):
+        """Return True if charge port latch is not engaged."""
+        latch = self._car.charge_port_latch
+        if latch is None:
+            return None
+        return latch != "Engaged"
+
+
+class TeslaCarChargePortDoor(TeslaCarEntity, BinarySensorEntity):
+    """Representation of a Tesla charge port door status sensor.
+
+    Read-only replacement for the removed charger door cover.
+    """
+
+    type = "charge port door"
+    _attr_device_class = BinarySensorDeviceClass.OPENING
+    _attr_icon = "mdi:ev-plug-tesla"
+
+    @property
+    def is_on(self):
+        """Return True if charge port door is open."""
+        return self._car.is_charge_port_door_open
+
+
+class TeslaCarFrunk(TeslaCarEntity, BinarySensorEntity):
+    """Representation of a Tesla car frunk status sensor.
+
+    Read-only replacement for the removed frunk cover.
+    """
+
+    type = "frunk"
+    _attr_device_class = BinarySensorDeviceClass.OPENING
+    _attr_icon = "mdi:car"
+
+    @property
+    def is_on(self):
+        """Return True if frunk is open."""
+        if self._car.is_frunk_closed is None:
+            return None
+        return not self._car.is_frunk_closed
+
+
+class TeslaCarTrunk(TeslaCarEntity, BinarySensorEntity):
+    """Representation of a Tesla car trunk status sensor.
+
+    Read-only replacement for the removed trunk cover.
+    """
+
+    type = "trunk"
+    _attr_device_class = BinarySensorDeviceClass.OPENING
+    _attr_icon = "mdi:car-back"
+
+    @property
+    def is_on(self):
+        """Return True if trunk is open."""
+        if self._car.is_trunk_closed is None:
+            return None
+        return not self._car.is_trunk_closed
+
+
+class TeslaCarSunRoof(TeslaCarEntity, BinarySensorEntity):
+    """Representation of a Tesla car sunroof status sensor.
+
+    Read-only replacement for the removed sunroof cover. Only enabled if a
+    sunroof is installed.
+    """
+
+    type = "sunroof"
+    _attr_device_class = BinarySensorDeviceClass.OPENING
+    _attr_icon = "mdi:car-select"
+
+    def __init__(self, car, coordinator) -> None:
+        """Initialize sunroof entity."""
+        # pylint: disable=protected-access
+        self._enabled_by_default = bool(
+            car._vehicle_data.get("vehicle_config", {}).get("sun_roof_installed")
+        )
+        super().__init__(car, coordinator)
+
+    @property
+    def available(self) -> bool:
+        """Return True if sunroof is installed."""
+        # pylint: disable=protected-access
+        return super().available and bool(
+            self._car._vehicle_data.get("vehicle_config", {}).get("sun_roof_installed")
+        )
+
+    @property
+    def is_on(self):
+        """Return True if sunroof is not closed."""
+        # pylint: disable=protected-access
+        state = self._car._vehicle_data.get("vehicle_state", {}).get("sun_roof_state")
+        if state is None:
+            return None
+        return state != "closed"
+
+    @property
+    def extra_state_attributes(self):
+        """Return device state attributes."""
+        return {
+            "sun_roof_percent_open": self._car.sun_roof_percent_open,
+        }
+
+
+class TeslaCarSentryMode(TeslaCarEntity, BinarySensorEntity):
+    """Representation of a Tesla car sentry mode status sensor.
+
+    Read-only replacement for the removed sentry mode switch.
+    """
+
+    type = "sentry mode"
+    _attr_icon = "mdi:shield-car"
+    _attr_device_class = BinarySensorDeviceClass.RUNNING
+
+    def __init__(self, car, coordinator) -> None:
+        """Initialize sentry mode entity."""
+        self._enabled_by_default = bool(car.sentry_mode_available)
+        super().__init__(car, coordinator)
+
+    @property
+    def available(self) -> bool:
+        """Return True if sentry mode is available."""
+        return super().available and bool(self._car.sentry_mode_available)
+
+    @property
+    def is_on(self):
+        """Return True if sentry mode is on."""
+        return bool(self._car.sentry_mode_available and self._car.sentry_mode)
+
+
+class TeslaCarValetMode(TeslaCarEntity, BinarySensorEntity):
+    """Representation of a Tesla car valet mode status sensor.
+
+    Read-only replacement for the removed valet mode switch.
+    """
+
+    type = "valet mode"
+    _attr_icon = "mdi:room-service"
+    _attr_device_class = BinarySensorDeviceClass.RUNNING
+
+    @property
+    def is_on(self):
+        """Return True if valet mode is on."""
+        return self._car.is_valet_mode
+
+
+class TeslaCarClimateOn(TeslaCarEntity, BinarySensorEntity):
+    """Representation of a Tesla car climate on status sensor.
+
+    Read-only replacement for the removed climate entity.
+    """
+
+    type = "climate"
+    _attr_icon = "mdi:air-conditioner"
+    _attr_device_class = BinarySensorDeviceClass.RUNNING
+
+    @property
+    def is_on(self):
+        """Return True if climate is on."""
+        return self._car.is_climate_on
+
+
+class TeslaCarPreconditioning(TeslaCarEntity, BinarySensorEntity):
+    """Representation of a Tesla car preconditioning status sensor."""
+
+    type = "preconditioning"
+    _attr_icon = "mdi:snowflake-thermometer"
+    _attr_device_class = BinarySensorDeviceClass.RUNNING
+
+    @property
+    def is_on(self):
+        """Return True if preconditioning is on."""
+        return self._car.is_preconditioning
+
+
+class TeslaCarBatteryHeater(TeslaCarEntity, BinarySensorEntity):
+    """Representation of a Tesla car battery heater status sensor."""
+
+    type = "battery heater"
+    _attr_icon = "mdi:heating-coil"
+    _attr_device_class = BinarySensorDeviceClass.HEAT
+    _enabled_by_default = False
+
+    @property
+    def is_on(self):
+        """Return True if battery heater is on."""
+        return self._car.is_battery_heater_on
+
+
+class TeslaCarFrontDefroster(TeslaCarEntity, BinarySensorEntity):
+    """Representation of a Tesla car front defroster status sensor."""
+
+    type = "front defroster"
+    _attr_icon = "mdi:car-defrost-front"
+    _attr_device_class = BinarySensorDeviceClass.HEAT
+    _enabled_by_default = False
+
+    @property
+    def is_on(self):
+        """Return True if the front defroster is on."""
+        return self._car.is_front_defroster_on
+
+
+class TeslaCarRearDefroster(TeslaCarEntity, BinarySensorEntity):
+    """Representation of a Tesla car rear defroster status sensor."""
+
+    type = "rear defroster"
+    _attr_icon = "mdi:car-defrost-rear"
+    _attr_device_class = BinarySensorDeviceClass.HEAT
+    _enabled_by_default = False
+
+    @property
+    def is_on(self):
+        """Return True if the rear defroster is on."""
+        return self._car.is_rear_defroster_on

@@ -9,7 +9,10 @@ from homeassistant.components.sensor import (
     SensorStateClass,
 )
 from homeassistant.const import (
+    DEGREE,
     PERCENTAGE,
+    UnitOfElectricCurrent,
+    UnitOfElectricPotential,
     UnitOfEnergy,
     UnitOfLength,
     UnitOfPower,
@@ -43,6 +46,17 @@ TPMS_SENSOR_ATTR = {
     "TPMS rear right": "tpms_last_seen_pressure_time_rr",
 }
 
+# Seat name -> seat_id as used by teslajsonpy get_seat_heater_status().
+SEAT_ID_MAP = {
+    "left": 0,
+    "right": 1,
+    "rear left": 2,
+    "rear center": 4,
+    "rear right": 5,
+    "third row left": 6,
+    "third row right": 7,
+}
+
 
 async def async_setup_entry(hass: HomeAssistant, config_entry, async_add_entities):
     """Set up the Tesla Sensors by config_entry."""
@@ -70,6 +84,29 @@ async def async_setup_entry(hass: HomeAssistant, config_entry, async_add_entitie
         entities.append(TeslaCarDistanceToArrival(car, coordinator))
         entities.append(TeslaCarDataUpdateTime(car, coordinator))
         entities.append(TeslaCarPollingInterval(car, coordinator))
+        # Read-only sensors converted from former command entities plus
+        # additional data exposed by the teslajsonpy fork. None of these send
+        # commands to the vehicle.
+        entities.append(TeslaCarChargeLimit(car, coordinator))
+        entities.append(TeslaCarChargingAmps(car, coordinator))
+        entities.append(TeslaCarChargerCurrent(car, coordinator))
+        entities.append(TeslaCarChargerVoltage(car, coordinator))
+        entities.append(TeslaCarDriverTempSetting(car, coordinator))
+        entities.append(TeslaCarPassengerTempSetting(car, coordinator))
+        entities.append(TeslaCarCabinOverheatProtection(car, coordinator))
+        entities.append(TeslaCarClimateKeeperMode(car, coordinator))
+        entities.append(TeslaCarHeatedSteeringWheelLevel(car, coordinator))
+        entities.append(TeslaCarSpeed(car, coordinator))
+        entities.append(TeslaCarPower(car, coordinator))
+        entities.append(TeslaCarHeading(car, coordinator))
+        for seat_name in SEAT_ID_MAP:
+            if "rear" in seat_name and not car.rear_seat_heaters:
+                continue
+            if "third" in seat_name and (
+                car.third_row_seats == "None" or car.third_row_seats is None
+            ):
+                continue
+            entities.append(TeslaCarSeatHeater(car, coordinator, seat_name))
 
     async_add_entities(entities, update_before_add=True)
 
@@ -546,3 +583,235 @@ class TeslaCarPollingInterval(TeslaCarEntity, SensorEntity):
     def native_value(self) -> int:
         """Return the update time interval."""
         return self.coordinator.controller.get_update_interval_vin(vin=self._car.vin)
+
+
+class TeslaCarChargeLimit(TeslaCarEntity, SensorEntity):
+    """Representation of a Tesla car charge limit sensor.
+
+    Read-only replacement for the removed charge limit number entity.
+    """
+
+    type = "charge limit"
+    _attr_state_class = SensorStateClass.MEASUREMENT
+    _attr_native_unit_of_measurement = PERCENTAGE
+    _attr_icon = "mdi:ev-station"
+
+    @property
+    def native_value(self) -> int:
+        """Return charge limit."""
+        return self._car.charge_limit_soc
+
+
+class TeslaCarChargingAmps(TeslaCarEntity, SensorEntity):
+    """Representation of a Tesla car charging amps sensor.
+
+    Read-only replacement for the removed charging amps number entity.
+    """
+
+    type = "charging amps"
+    _attr_device_class = SensorDeviceClass.CURRENT
+    _attr_state_class = SensorStateClass.MEASUREMENT
+    _attr_native_unit_of_measurement = UnitOfElectricCurrent.AMPERE
+    _attr_icon = "mdi:ev-station"
+
+    @property
+    def native_value(self) -> int:
+        """Return requested charging amps."""
+        return self._car.charge_current_request
+
+
+class TeslaCarChargerCurrent(TeslaCarEntity, SensorEntity):
+    """Representation of a Tesla car actual charger current sensor."""
+
+    type = "charger current"
+    _attr_device_class = SensorDeviceClass.CURRENT
+    _attr_state_class = SensorStateClass.MEASUREMENT
+    _attr_native_unit_of_measurement = UnitOfElectricCurrent.AMPERE
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+    _attr_icon = "mdi:current-ac"
+
+    @property
+    def native_value(self) -> int:
+        """Return actual charger current."""
+        return self._car.charger_actual_current
+
+
+class TeslaCarChargerVoltage(TeslaCarEntity, SensorEntity):
+    """Representation of a Tesla car charger voltage sensor."""
+
+    type = "charger voltage"
+    _attr_device_class = SensorDeviceClass.VOLTAGE
+    _attr_state_class = SensorStateClass.MEASUREMENT
+    _attr_native_unit_of_measurement = UnitOfElectricPotential.VOLT
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+    _attr_icon = "mdi:sine-wave"
+
+    @property
+    def native_value(self) -> int:
+        """Return charger voltage."""
+        return self._car.charger_voltage
+
+
+class TeslaCarDriverTempSetting(TeslaCarEntity, SensorEntity):
+    """Representation of a Tesla car driver temperature setting sensor.
+
+    Read-only replacement for the target temperature of the removed climate
+    entity.
+    """
+
+    type = "driver temperature setting"
+    _attr_device_class = SensorDeviceClass.TEMPERATURE
+    _attr_state_class = SensorStateClass.MEASUREMENT
+    _attr_native_unit_of_measurement = UnitOfTemperature.CELSIUS
+    _attr_icon = "mdi:thermostat"
+
+    @property
+    def native_value(self) -> float:
+        """Return driver temperature setting."""
+        return self._car.driver_temp_setting
+
+
+class TeslaCarPassengerTempSetting(TeslaCarEntity, SensorEntity):
+    """Representation of a Tesla car passenger temperature setting sensor."""
+
+    type = "passenger temperature setting"
+    _attr_device_class = SensorDeviceClass.TEMPERATURE
+    _attr_state_class = SensorStateClass.MEASUREMENT
+    _attr_native_unit_of_measurement = UnitOfTemperature.CELSIUS
+    _attr_icon = "mdi:thermostat"
+    _enabled_by_default = False
+
+    @property
+    def native_value(self) -> float:
+        """Return passenger temperature setting."""
+        return self._car.passenger_temp_setting
+
+
+class TeslaCarCabinOverheatProtection(TeslaCarEntity, SensorEntity):
+    """Representation of a Tesla car cabin overheat protection sensor.
+
+    Read-only replacement for the removed cabin overheat protection select.
+    """
+
+    type = "cabin overheat protection"
+    _attr_device_class = SensorDeviceClass.ENUM
+    _attr_options = ["Off", "No A/C", "On"]
+    _attr_icon = "mdi:sun-thermometer"
+
+    @property
+    def native_value(self) -> Optional[str]:
+        """Return cabin overheat protection setting."""
+        return self._car.cabin_overheat_protection
+
+
+class TeslaCarClimateKeeperMode(TeslaCarEntity, SensorEntity):
+    """Representation of a Tesla car climate keeper mode sensor."""
+
+    type = "climate keeper mode"
+    _attr_device_class = SensorDeviceClass.ENUM
+    _attr_options = ["off", "on", "dog", "camp"]
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+    _attr_icon = "mdi:fan"
+
+    @property
+    def native_value(self) -> Optional[str]:
+        """Return climate keeper mode."""
+        return self._car.climate_keeper_mode
+
+
+class TeslaCarHeatedSteeringWheelLevel(TeslaCarEntity, SensorEntity):
+    """Representation of a Tesla car heated steering wheel level sensor.
+
+    Read-only replacement for the removed heated steering wheel select.
+    """
+
+    type = "heated steering wheel level"
+    _attr_state_class = SensorStateClass.MEASUREMENT
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+    _attr_icon = "mdi:steering"
+
+    @property
+    def native_value(self) -> Optional[int]:
+        """Return heated steering wheel level."""
+        return self._car.get_heated_steering_wheel_level()
+
+    @property
+    def available(self) -> bool:
+        """Return True if the car has a heated steering wheel."""
+        return super().available and self._car.steering_wheel_heater
+
+
+class TeslaCarSpeed(TeslaCarEntity, SensorEntity):
+    """Representation of a Tesla car speed sensor."""
+
+    type = "speed"
+    _attr_device_class = SensorDeviceClass.SPEED
+    _attr_state_class = SensorStateClass.MEASUREMENT
+    _attr_native_unit_of_measurement = UnitOfSpeed.MILES_PER_HOUR
+    _attr_icon = "mdi:speedometer"
+
+    @property
+    def native_value(self) -> Optional[float]:
+        """Return current speed."""
+        return self._car.speed
+
+
+class TeslaCarPower(TeslaCarEntity, SensorEntity):
+    """Representation of a Tesla car power sensor."""
+
+    type = "power"
+    _attr_device_class = SensorDeviceClass.POWER
+    _attr_state_class = SensorStateClass.MEASUREMENT
+    _attr_native_unit_of_measurement = UnitOfPower.KILO_WATT
+    _attr_icon = "mdi:flash"
+
+    @property
+    def native_value(self) -> Optional[float]:
+        """Return current power usage."""
+        power = self._car.power
+        if power is None:
+            return None
+        return float(power)
+
+
+class TeslaCarHeading(TeslaCarEntity, SensorEntity):
+    """Representation of a Tesla car heading sensor."""
+
+    type = "heading"
+    _attr_state_class = SensorStateClass.MEASUREMENT
+    _attr_native_unit_of_measurement = DEGREE
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+    _attr_icon = "mdi:compass"
+
+    @property
+    def native_value(self) -> Optional[int]:
+        """Return heading."""
+        return self._car.heading
+
+
+class TeslaCarSeatHeater(TeslaCarEntity, SensorEntity):
+    """Representation of a Tesla car seat heater level sensor.
+
+    Read-only replacement for the removed heated seat selects.
+    """
+
+    _attr_state_class = SensorStateClass.MEASUREMENT
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+    _attr_icon = "mdi:car-seat-heater"
+    _enabled_by_default = False
+
+    def __init__(
+        self,
+        car: TeslaCar,
+        coordinator: TeslaDataUpdateCoordinator,
+        seat_name: str,
+    ) -> None:
+        """Initialize seat heater sensor."""
+        self._seat_name = seat_name
+        self.type = f"heated seat {seat_name}"
+        super().__init__(car, coordinator)
+
+    @property
+    def native_value(self) -> Optional[int]:
+        """Return seat heater level."""
+        return self._car.get_seat_heater_status(SEAT_ID_MAP[self._seat_name])

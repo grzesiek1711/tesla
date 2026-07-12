@@ -201,9 +201,7 @@ async def test_update_vehicles_key_error_reloads_entry(hass: HomeAssistant) -> N
 
     assert await coordinator._async_update_data() is None
 
-    controller.update.assert_awaited_once_with(
-        vins=set(), update_vehicles=True
-    )
+    controller.update.assert_awaited_once_with(vins=set(), update_vehicles=True)
     hass.config_entries.async_reload.assert_awaited_once_with("test_entry")
 
 

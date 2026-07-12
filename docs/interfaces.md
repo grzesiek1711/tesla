@@ -59,13 +59,14 @@ coordinator.data: Dict = {
 async def async_request_refresh() -> None
 ```
 
-**Usage**: Called by entity actions (lock, climate, etc.) to fetch latest state
+**Usage**: Called by the wake up / force data update buttons and after runtime
+configuration changes to fetch the latest state
 
 **Example**:
 
 ```python
-async def async_lock(self):
-    await self.coordinator.api.lock_doors()
+async def async_press(self):
+    await self.coordinator.controller.wake_up(self.vin)
     await self.coordinator.async_request_refresh()
 ```
 
@@ -371,14 +372,12 @@ class Vehicle:
     charging_state: str  # "Charging", "Complete", "Stopped", "Disconnected"
     online_state: str  # "online", "offline", "asleep"
 
-    # Data accessors
+    # Data accessors (read-only)
     async def get_latest_vehicle_data() -> dict
-    async def lock_doors() -> dict
-    async def unlock_doors() -> dict
-    async def set_climate_temperature(temp: float) -> dict
-    async def start_climate() -> dict
-    async def stop_climate() -> dict
-    # ... and many more commands
+    async def wake_up() -> dict  # does not require command signing
+    # NOTE: command methods (lock_doors, unlock_doors, set_climate_temperature,
+    # start_climate, stop_climate, etc.) are no longer used as of v5.0.0 —
+    # sending commands requires Tesla's signed vehicle-command protocol.
 ```
 
 ---

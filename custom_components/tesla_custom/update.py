@@ -1,7 +1,5 @@
 """Support for Tesla update."""
 
-from typing import Any
-
 from homeassistant.components.update import UpdateEntity, UpdateEntityFeature
 from homeassistant.core import HomeAssistant
 
@@ -19,8 +17,6 @@ async def async_setup_entry(hass: HomeAssistant, config_entry, async_add_entitie
     async_add_entities(entities, update_before_add=True)
 
 
-INSTALLABLE_STATUSES = ["available", "scheduled"]
-
 PRETTY_STATUS_STRINGS = {
     "downloading_wifi_wait": "Waiting on Wi-Fi",
     "downloading": "Downloading",
@@ -37,13 +33,12 @@ class TeslaCarUpdate(TeslaCarEntity, UpdateEntity):
 
     @property
     def supported_features(self):
-        """Return the list of supported features."""
-        # Don't enable Install button until the update has downloaded
-        if (
-            self._car.software_update
-            and self._car.software_update.get("status") in INSTALLABLE_STATUSES
-        ):
-            return UpdateEntityFeature.INSTALL | UpdateEntityFeature.PROGRESS
+        """Return the list of supported features.
+
+        Installing an update requires Tesla's signed vehicle-command protocol,
+        so the INSTALL feature is not offered. Only read-only progress
+        reporting is supported.
+        """
         return UpdateEntityFeature.PROGRESS
 
     @property
@@ -121,10 +116,3 @@ class TeslaCarUpdate(TeslaCarEntity, UpdateEntity):
 
         # Otherwise, we're not updating, so return None
         return None
-
-    async def async_install(self, version, backup: bool, **kwargs: Any) -> None:
-        """Install an Update."""
-        # Ask Tesla to start the update now.
-        await self._car.schedule_software_update(offset_sec=0)
-        # Do a controller refresh, to get the latest data from Tesla.
-        await self.update_controller(force=True)

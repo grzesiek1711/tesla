@@ -2,6 +2,26 @@
 
 
 
+## v5.0.0 (2026-07-12)
+
+### Breaking
+
+* breaking: remove all entities that send signed vehicle commands. Sending commands to the vehicle (lock/unlock, climate control, opening the trunk/frunk/windows/charge port, sentry/valet mode, charge start/stop, charge limit/amps, seat and steering wheel heaters, cabin overheat protection, HomeLink, remote start, boombox and software update install) now requires Tesla's signed vehicle-command protocol and a signing certificate, which this integration does not use. These platforms/entities have been removed: `climate`, `cover`, `lock`, `select`, `number`, plus the command switches (heated steering wheel, sentry mode, charger, valet mode) and command buttons (horn, flash lights, HomeLink, remote start, emissions test/boombox).
+
+* breaking: the `switch` platform now only exposes the local **polling** switch, and the `button` platform only exposes **wake up** and **force data update** (none of which require signing). The software `update` entity is now read-only (no install button).
+
+### Feature
+
+* feat: convert command entities that expose readable state into read-only status entities. New binary sensors: doors lock, charge port latch, charge port door, frunk, trunk, sunroof, sentry mode, valet mode, climate, preconditioning, battery heater, front/rear defroster.
+
+* feat: add read-only sensors for data available from the teslajsonpy fork: charge limit, charging amps, charger current, charger voltage, driver/passenger temperature setting, cabin overheat protection, climate keeper mode, heated steering wheel level, speed, power, heading and per-seat heater levels.
+
+### Documentation
+
+* docs: update README, AGENTS.md and docs/ to reflect the read-only, vehicles-only entity set.
+
+
+
 ## v4.0.0 (2026-07-12)
 
 ### Breaking

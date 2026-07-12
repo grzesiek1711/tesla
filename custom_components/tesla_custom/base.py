@@ -116,4 +116,3 @@ class TeslaCarEntity(TeslaBaseEntity):
     def assumed_state(self) -> bool:
         """Return whether the data is from an online vehicle."""
         return self.coordinator.assumed_state
-

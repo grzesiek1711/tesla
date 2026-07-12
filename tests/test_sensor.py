@@ -566,3 +566,73 @@ async def test_distance_to_arrival(hass: HomeAssistant) -> None:
 
     assert state.attributes.get(ATTR_DEVICE_CLASS) == SensorDeviceClass.DISTANCE
     assert state.attributes.get(ATTR_STATE_CLASS) == SensorStateClass.MEASUREMENT
+
+
+async def test_charge_limit_sensor(hass: HomeAssistant) -> None:
+    """Tests charge limit sensor."""
+    await setup_platform(hass, SENSOR_DOMAIN)
+
+    state = hass.states.get("sensor.my_model_s_charge_limit")
+    assert state.state == str(
+        car_mock_data.VEHICLE_DATA["charge_state"]["charge_limit_soc"]
+    )
+    assert state.attributes.get(ATTR_UNIT_OF_MEASUREMENT) == PERCENTAGE
+
+
+async def test_charging_amps_sensor(hass: HomeAssistant) -> None:
+    """Tests charging amps sensor."""
+    await setup_platform(hass, SENSOR_DOMAIN)
+
+    state = hass.states.get("sensor.my_model_s_charging_amps")
+    assert state.state == str(
+        car_mock_data.VEHICLE_DATA["charge_state"]["charge_current_request"]
+    )
+    assert state.attributes.get(ATTR_DEVICE_CLASS) == SensorDeviceClass.CURRENT
+
+
+async def test_driver_temp_setting_sensor(hass: HomeAssistant) -> None:
+    """Tests driver temperature setting sensor."""
+    await setup_platform(hass, SENSOR_DOMAIN)
+
+    state = hass.states.get("sensor.my_model_s_driver_temperature_setting")
+    assert state.attributes.get(ATTR_DEVICE_CLASS) == SensorDeviceClass.TEMPERATURE
+
+
+async def test_cabin_overheat_protection_sensor(hass: HomeAssistant) -> None:
+    """Tests cabin overheat protection sensor."""
+    await setup_platform(hass, SENSOR_DOMAIN)
+
+    state = hass.states.get("sensor.my_model_s_cabin_overheat_protection")
+    assert (
+        state.state
+        == car_mock_data.VEHICLE_DATA["climate_state"]["cabin_overheat_protection"]
+    )
+    assert state.attributes.get(ATTR_DEVICE_CLASS) == SensorDeviceClass.ENUM
+
+
+async def test_speed_sensor(hass: HomeAssistant) -> None:
+    """Tests speed sensor."""
+    await setup_platform(hass, SENSOR_DOMAIN)
+
+    state = hass.states.get("sensor.my_model_s_speed")
+    assert state.attributes.get(ATTR_DEVICE_CLASS) == SensorDeviceClass.SPEED
+
+
+async def test_power_sensor(hass: HomeAssistant) -> None:
+    """Tests power sensor."""
+    await setup_platform(hass, SENSOR_DOMAIN)
+
+    state = hass.states.get("sensor.my_model_s_power")
+    assert state.state == str(float(car_mock_data.VEHICLE_DATA["drive_state"]["power"]))
+    assert state.attributes.get(ATTR_DEVICE_CLASS) == SensorDeviceClass.POWER
+
+
+async def test_charger_voltage_sensor(hass: HomeAssistant) -> None:
+    """Tests charger voltage sensor."""
+    await setup_platform(hass, SENSOR_DOMAIN)
+
+    state = hass.states.get("sensor.my_model_s_charger_voltage")
+    assert state.state == str(
+        car_mock_data.VEHICLE_DATA["charge_state"]["charger_voltage"]
+    )
+    assert state.attributes.get(ATTR_DEVICE_CLASS) == SensorDeviceClass.VOLTAGE

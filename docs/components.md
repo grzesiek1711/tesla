@@ -11,7 +11,7 @@ graph TB
     CONFIG["Config Flow<br/>Authentication & Options"]
     SUPPORT["Support Modules<br/>TeslaMate, Services, Utils"]
 
-    ENTITIES["Entity Platforms<br/>12 entity types across all domains"]
+    ENTITIES["Entity Platforms<br/>7 read-only entity types"]
 
     TDC --> BASE
     BASE --> ENTITIES
@@ -134,9 +134,9 @@ TeslaBaseEntity (Common functionality)
 
 **Example Subclasses**:
 
-- `TeslaCarClimate` - Climate entity for HVAC control
 - `TeslaCarBattery` - Battery level sensor
-- `TeslaCarCharger` - Charger control switch
+- `TeslaCarClimateOn` - Climate on/off binary sensor
+- `TeslaCarPolling` - Local polling switch
 
 ---
 
@@ -145,57 +145,74 @@ TeslaBaseEntity (Common functionality)
 ### Entity Type Distribution
 
 ```
-Sensors (668 LOC)              15 classes
-└── Vehicle: Battery, Range, Charger, Temperature, etc.
+Sensors                        28 classes
+└── Battery, range, charger rate/energy/power, charge limit, charging amps,
+    charger current/voltage, temperature (inside/outside), driver/passenger
+    temp setting, cabin overheat protection, climate keeper mode, heated
+    steering wheel level, per-seat heater, speed, power, heading, odometer,
+    shift state, center display state, TPMS, time to charge complete, arrival
+    time, distance to arrival, data update time, polling interval
 
-Binary Sensors (300 LOC)       10 classes
-└── Vehicle: Charging, Online, Doors, Windows
+Binary Sensors                 23 classes
+└── Charging, online, asleep, user present, parking brake, charger connection,
+    doors, windows, doors lock, charge port latch, charge port door, frunk,
+    trunk, sunroof, sentry mode, valet mode, climate on, preconditioning,
+    battery heater, front/rear defroster, scheduled charging, scheduled
+    departure
 
-Switches (189 LOC)             5 classes
-├── Charger, Sentry Mode, Polling, Valet Mode
-└── Heated Steering Wheel
+Switch                         1 class
+└── Polling (local only; does not command the vehicle)
 
-Climate (173 LOC)              1 class
-└── HVAC control, temperature, presets
+Buttons                        2 classes
+└── Wake Up, Force Data Update
 
-Covers (209 LOC)               5 classes
-└── Frunk, Trunk, Windows, Sunroof, Charger Door
-
-Buttons (153 LOC)              7 classes
-└── Horn, Flash Lights, Wake Up, HomeLink, etc.
-
-Locks (78 LOC)                 2 classes
-└── Door Locks, Charge Port Latch
-
-Selects (460 LOC)              3 classes
-└── Vehicle: Seat Heaters, Steering Wheel, Overheat Protection
-
-Numbers (151 LOC)              2 classes
-└── Charge Limit, Charging Amps
-
-Device Tracker (91 LOC)        2 classes
+Device Tracker                 2 classes
 └── Car Location, Route Destination
 
-Update (130 LOC)               1 class
-└── Software Version Status
+Update                         1 class
+└── Software Version Status (read-only)
 
-Text (66 LOC)                  1 class
+Text                           1 class
 └── TeslaMate ID Configuration
 ```
+
+> **Removed in v5.0.0**: the `climate`, `cover`, `lock`, `select` and `number`
+> platforms, the command switches (charger, sentry, valet, heated steering
+> wheel) and the command buttons (horn, flash lights, HomeLink, remote start,
+> boombox). These required Tesla's signed vehicle-command protocol. Where the
+> state is readable it is now exposed as a sensor or binary sensor above.
+
+Total: 28 + 23 + 1 + 2 + 2 + 1 + 1 = 58 entity classes across 7 platforms.
 
 ### Sensor Platform (`sensor.py`)
 
 **Implements**: Numeric and text state values
 
-**Key Classes**:
+**Key Classes** (28 total):
 
 - `TeslaCarBattery` - Battery percentage
 - `TeslaCarRange` - Estimated range
 - `TeslaCarChargerPower` - Current charging power
 - `TeslaCarChargerRate` - Charging rate (km/hour)
+- `TeslaCarEnergyAdded` - Energy added this session
+- `TeslaCarChargeLimit` - Charge limit percentage
+- `TeslaCarChargingAmps` - Charging amps
+- `TeslaCarChargerCurrent` - Charger actual current
+- `TeslaCarChargerVoltage` - Charger voltage
 - `TeslaCarTemp` - Inside/outside temperature
+- `TeslaCarDriverTempSetting` - Driver target temperature
+- `TeslaCarPassengerTempSetting` - Passenger target temperature
+- `TeslaCarCabinOverheatProtection` - Cabin overheat protection mode
+- `TeslaCarClimateKeeperMode` - Climate keeper mode
+- `TeslaCarHeatedSteeringWheelLevel` - Heated steering wheel level
+- `TeslaCarSeatHeater` - Per-seat heater level (diagnostic)
+- `TeslaCarSpeed` - Current speed
+- `TeslaCarPower` - Drive/regen power
+- `TeslaCarHeading` - Heading
 - `TeslaCarOdometer` - Total miles/km driven
 - `TeslaCarArrivalTime` - Route arrival time
+
+> All sensors are read-only.
 
 **Pattern**:
 
@@ -223,7 +240,7 @@ class TeslaSensorClass(TeslaCarEntity, SensorEntity):
 
 **Implements**: On/off state indicators
 
-**Key Classes**:
+**Key Classes** (23 total):
 
 - `TeslaCarOnline` - Vehicle online status
 - `TeslaCarAsleep` - Vehicle sleep state
@@ -231,6 +248,22 @@ class TeslaSensorClass(TeslaCarEntity, SensorEntity):
 - `TeslaCarChargerConnection` - Charger physically connected
 - `TeslaCarDoors` - Door open/closed
 - `TeslaCarWindows` - Window open/closed
+- `TeslaCarDoorsLock` - Doors locked/unlocked
+- `TeslaCarChargePortLatch` - Charge port latch engaged
+- `TeslaCarChargePortDoor` - Charge port door open/closed
+- `TeslaCarFrunk` - Frunk open/closed
+- `TeslaCarTrunk` - Trunk open/closed
+- `TeslaCarSunRoof` - Sunroof open/closed
+- `TeslaCarSentryMode` - Sentry mode on/off
+- `TeslaCarValetMode` - Valet mode on/off
+- `TeslaCarClimateOn` - Climate on/off
+- `TeslaCarPreconditioning` - Preconditioning active
+- `TeslaCarBatteryHeater` - Battery heater on (diagnostic)
+- `TeslaCarFrontDefroster` / `TeslaCarRearDefroster` - Defroster on (diagnostic)
+- `TeslaCarScheduledCharging` / `TeslaCarScheduledDeparture` - Scheduling state
+- `TeslaCarUserPresent` - Parking brake / user present
+
+> All binary sensors are read-only.
 
 **Pattern**:
 
@@ -248,189 +281,72 @@ class TeslaBinarySensorClass(TeslaCarEntity, BinarySensorEntity):
 
 ### Switch Platform (`switch.py`)
 
-**Implements**: Toggle controls
+**Implements**: Local polling toggle (does not command the vehicle)
 
-**Key Classes**:
+**Key Class** (1 total):
 
-- `TeslaCarCharger` - Toggle charger on/off
-- `TeslaCarSentryMode` - Toggle sentry mode
-- `TeslaCarPolling` - Toggle polling on/off
-- `TeslaCarValetMode` - Toggle valet mode
-- `TeslaCarHeatedSteeringWheel` - Toggle heated steering
+- `TeslaCarPolling` - Enable/disable polling for the vehicle (local only)
+
+> **Removed in v5.0.0**: `TeslaCarCharger`, `TeslaCarSentryMode`,
+> `TeslaCarValetMode` and `TeslaCarHeatedSteeringWheel`. These commanded the
+> vehicle and required Tesla's signed vehicle-command protocol. Sentry and
+> valet state are now exposed as read-only binary sensors.
 
 **Pattern**:
 
 ```python
-class TeslaSwitchClass(TeslaCarEntity, SwitchEntity):
+class TeslaCarPolling(TeslaCarEntity, SwitchEntity):
     async def async_turn_on(self, **kwargs):
-        await self.coordinator.api.vehicle_command(...)
-        await self.coordinator.async_request_refresh()
+        # Enables local polling only; no command sent to the vehicle
+        self.coordinator.controller.enable_polling(self.vin)
 
     async def async_turn_off(self, **kwargs):
-        await self.coordinator.api.vehicle_command(...)
-        await self.coordinator.async_request_refresh()
+        self.coordinator.controller.disable_polling(self.vin)
 
     @property
     def is_on(self):
-        return self.vehicle["response"]["..."]["bool_value"]
+        return self.coordinator.controller.is_car_polling_enabled(self.vin)
 ```
 
-### Climate Platform (`climate.py`)
+### Removed Command Platforms (`climate.py`, `cover.py`, `lock.py`, `select.py`, `number.py`)
 
-**Implements**: HVAC temperature and mode control
-
-**Key Class**: `TeslaCarClimate`
-
-**Capabilities**:
-
-- Set target temperature
-- Set HVAC mode (heat, cool, auto, off)
-- Set fan mode (auto, low, medium, high)
-- Preset modes (defrost, keep on, dog mode, camp mode)
-
-**Pattern**:
-
-```python
-class TeslaCarClimate(TeslaCarEntity, ClimateEntity):
-    async def async_set_temperature(self, **kwargs):
-        await self.coordinator.api.set_climate_temperature(...)
-
-    async def async_set_hvac_mode(self, hvac_mode):
-        await self.coordinator.api.set_climate_mode(...)
-
-    async def async_set_fan_mode(self, fan_mode):
-        await self.coordinator.api.set_climate_fan(...)
-
-    async def async_set_preset_mode(self, preset_mode):
-        await self.coordinator.api.set_climate_preset(...)
-```
-
-### Cover Platform (`cover.py`)
-
-**Implements**: Openable/closable elements
-
-**Key Classes**:
-
-- `TeslaCarFrunk` - Front trunk
-- `TeslaCarTrunk` - Rear trunk
-- `TeslaCarWindows` - Windows
-- `TeslaCarSunRoof` - Sunroof
-- `TeslaCarChargerDoor` - Charging door
-
-**Pattern**:
-
-```python
-class TeslaCoverClass(TeslaCarEntity, CoverEntity):
-    async def async_open_cover(self, **kwargs):
-        await self.coordinator.api.open_element(...)
-
-    async def async_close_cover(self, **kwargs):
-        await self.coordinator.api.close_element(...)
-
-    @property
-    def is_closed(self):
-        return self.vehicle["response"]["..."]["is_closed"]
-```
+> **Removed in v5.0.0.** These platforms sent commands to the vehicle and
+> required Tesla's signed vehicle-command protocol and a signing certificate,
+> which this integration does not use:
+>
+> - `climate.py` - `TeslaCarClimate` (HVAC control)
+> - `cover.py` - frunk, trunk, windows, sunroof, charger door
+> - `lock.py` - door lock, charge port latch
+> - `select.py` - seat heaters, steering wheel heater, cabin overheat protection
+> - `number.py` - charge limit, charging amps
+>
+> Where the underlying state is readable, it is now exposed through the
+> read-only sensors and binary sensors described above (e.g. climate on,
+> frunk/trunk/sunroof open, doors lock, charge limit, charging amps, seat
+> heater levels, cabin overheat protection).
 
 ### Button Platform (`button.py`)
 
-**Implements**: One-time action triggers
+**Implements**: One-time action triggers (read-only actions only)
 
-**Key Classes**:
+**Key Classes** (2 total):
 
-- `TeslaCarHorn` - Sound horn
-- `TeslaCarFlashLights` - Flash lights
-- `TeslaCarWakeUp` - Wake sleeping vehicle
-- `TeslaCarTriggerHomelink` - Trigger garage door
-- `TeslaCarRemoteStart` - Start engine (vehicles with feature)
-- `TeslaCarForceDataUpdate` - Force data refresh
+- `TeslaCarWakeUp` - Wake sleeping vehicle (does not require signing)
+- `TeslaCarForceDataUpdate` - Force a data refresh of cached data
+
+> **Removed in v5.0.0**: `TeslaCarHorn`, `TeslaCarFlashLights`,
+> `TeslaCarTriggerHomelink`, `TeslaCarRemoteStart` and the boombox/emissions
+> test button. These commanded the vehicle and required Tesla's signed
+> vehicle-command protocol.
 
 **Pattern**:
 
 ```python
-class TeslaButtonClass(TeslaCarEntity, ButtonEntity):
+class TeslaCarWakeUp(TeslaCarEntity, ButtonEntity):
     async def async_press(self) -> None:
-        await self.coordinator.api.vehicle_command(...)
+        # Wake up / force refresh do not require command signing
+        await self.coordinator.controller.wake_up(self.vin)
         await self.coordinator.async_request_refresh()
-```
-
-### Lock Platform (`lock.py`)
-
-**Implements**: Lock/unlock controls
-
-**Key Classes**:
-
-- `TeslaCarDoors` - Door lock
-- `TeslaCarChargePortLatch` - Charge port lock
-
-**Pattern**:
-
-```python
-class TeslaLockClass(TeslaCarEntity, LockEntity):
-    async def async_lock(self, **kwargs):
-        await self.coordinator.api.lock_doors(...)
-
-    async def async_unlock(self, **kwargs):
-        await self.coordinator.api.unlock_doors(...)
-
-    @property
-    def is_locked(self):
-        return self.vehicle["response"]["..."]["is_locked"]
-```
-
-### Select Platform (`select.py`)
-
-**Implements**: Option selection
-
-**Key Classes**:
-
-- `TeslaCarHeatedSeat` - Seat heater level selection
-- `TeslaCarHeatedSteeringWheel` - Steering wheel heater level
-- `TeslaCarCabinOverheatProtection` - Overheat protection mode
-
-**Pattern**:
-
-```python
-class TeslaSelectClass(TeslaCarEntity, SelectEntity):
-    @property
-    def current_option(self):
-        return self.vehicle["response"]["..."]["current_option"]
-
-    @property
-    def options(self):
-        return ["option1", "option2", "option3"]
-
-    async def async_select_option(self, option: str):
-        await self.coordinator.api.set_option(option)
-```
-
-### Number Platform (`number.py`)
-
-**Implements**: Numeric value controls
-
-**Key Classes**:
-
-- `TeslaCarChargeLimit` - Set charge limit percentage
-- `TeslaCarChargingAmps` - Set charging amps
-
-**Pattern**:
-
-```python
-class TeslaNumberClass(TeslaCarEntity, NumberEntity):
-    @property
-    def native_value(self):
-        return self.vehicle["response"]["..."]["numeric_value"]
-
-    @property
-    def native_min_value(self):
-        return 0
-
-    @property
-    def native_max_value(self):
-        return 100
-
-    async def async_set_native_value(self, value: float):
-        await self.coordinator.api.set_value(value)
 ```
 
 ### Device Tracker Platform (`device_tracker.py`)
@@ -468,8 +384,12 @@ class TeslaLocationClass(TeslaCarEntity, TrackerEntity):
 **Capabilities**:
 
 - Track available software updates
-- Show update status (available, scheduled, downloading, installing)
-- Trigger update installation
+- Show update status (available, scheduled, downloading, installing) and
+  install progress
+
+> **Read-only (v5.0.0)**: `supported_features` exposes only
+> `UpdateEntityFeature.PROGRESS`; `async_install` was removed because
+> installing an update requires Tesla's signed vehicle-command protocol.
 
 ### Text Platform (`text.py`)
 
@@ -566,14 +486,17 @@ data:
 
 ## Component Responsibility Matrix
 
-| Component     | Setup | Config | Polling | Dispatch | Commands |
-| ------------- | ----- | ------ | ------- | -------- | -------- |
-| Coordinator   | ✓     | ✓      | ✓       | ✓        | ✓        |
-| Base Entities | ✓     | ✓      | -       | ✓        | -        |
-| Platforms     | ✓     | -      | -       | -        | ✓        |
-| Config Flow   | -     | ✓      | -       | -        | -        |
-| TeslaMate     | -     | -      | ✓       | ✓        | -        |
-| Services      | -     | -      | -       | -        | ✓        |
+| Component     | Setup | Config | Polling | Dispatch |
+| ------------- | ----- | ------ | ------- | -------- |
+| Coordinator   | ✓     | ✓      | ✓       | ✓        |
+| Base Entities | ✓     | ✓      | -       | ✓        |
+| Platforms     | ✓     | -      | -       | -        |
+| Config Flow   | -     | ✓      | -       | -        |
+| TeslaMate     | -     | -      | ✓       | ✓        |
+| Services      | -     | -      | -       | -        |
+
+> As of v5.0.0 no component sends commands to the vehicle; the integration is
+> read-only apart from wake up, force data update and the local polling switch.
 
 ---
 

@@ -20,15 +20,24 @@ A fork of the previous official Tesla integration in Home Assistant which has be
 
 ## What This Integration Does
 
-This integration provides comprehensive Home Assistant support for Tesla vehicles:
+This integration provides read-only Home Assistant monitoring for Tesla vehicles:
 
 **For Tesla Vehicles**:
 
 - Real-time state monitoring (battery, temperature, location, charging)
-- Climate control (HVAC, presets, temperature)
-- Vehicle commands (lock/unlock doors, horn, flash lights)
-- Charging management (set limit, disable charger)
-- Charging status and energy tracking
+- Climate status (HVAC on/off, target/current temperature, preconditioning)
+- Vehicle status (locks, doors, windows, trunk/frunk, charge port, sentry/valet mode)
+- Charging status and energy tracking (charge limit, amps, voltage, power, rate)
+- Software update status
+
+> **Note (v5.0.0): read-only integration.** Sending commands to the vehicle
+> (lock/unlock, climate control, opening the trunk/frunk/windows, charge
+> start/stop, etc.) now requires Tesla's signed vehicle-command protocol and a
+> signing certificate, which this integration does not use. All command
+> entities have been removed and, where the corresponding state is readable,
+> replaced by read-only sensors/binary sensors. The only actions that remain
+> are **wake up** and **force data update** (which do not require signing) and
+> a local **polling** switch.
 
 > **Note**: This is a vehicles-only fork. Tesla Energy Site (Powerwall/Solar)
 > support was removed in v4.0.0. If you need Powerwall support, use the 3.x
@@ -101,56 +110,39 @@ After adding the integration, open its options dialog:
 
 ### Vehicle Entities
 
+All vehicle entities are read-only (status monitoring), except the wake up and
+force data update buttons and the local polling switch.
+
 **Sensors**:
 
-- Battery level, charge rate, estimated range
-- Inside/outside temperature, odometer
-- Energy added in charging session, charger power
-- Time to charge complete, TPMS tire pressure
-- Active route destination and arrival time
+- Battery level, charge rate, estimated range, power, speed, heading
+- Inside/outside temperature, driver/passenger temperature setting
+- Odometer, TPMS tire pressure
+- Charge limit %, charging amps, charger current, charger voltage, charger power
+- Energy added in charging session, time to charge complete
+- Cabin overheat protection, climate keeper mode, heated steering wheel level
+- Per-seat heater levels (diagnostic, disabled by default)
+- Active route destination, arrival time and distance to arrival
+- Shift state, center display state, polling interval, last data update time
 
 **Binary Sensors**:
 
-- Charging status, online status, asleep status
-- Door open/closed, window open/closed
-- Parking brake, charger connection
+- Charging status, online status, asleep status, user present
+- Door open/closed, window open/closed, parking brake, charger connection
+- Doors lock, charge port latch, charge port door
+- Frunk, trunk, sunroof (open/closed)
+- Sentry mode, valet mode, climate on, preconditioning
+- Battery heater, front/rear defroster (diagnostic, disabled by default)
+- Scheduled charging, scheduled departure
 
 **Switches**:
 
-- Charger on/off, sentry mode
-- Polling enable/disable, valet mode
-- Heated steering wheel
-
-**Climate**:
-
-- HVAC mode (heat, cool, auto, off)
-- Target temperature and current temperature
-- Preset modes (defrost, keep on, dog mode, camp mode)
-
-**Covers**:
-
-- Frunk (front trunk), rear trunk
-- Windows, sunroof
-- Charger door
-
-**Locks**:
-
-- Door lock, charge port latch
+- Polling enable/disable (local only, does not command the vehicle)
 
 **Buttons**:
 
-- Horn, flash lights, wake up
-- Force data update, trigger HomeLink
-- Remote start
-
-**Selects**:
-
-- Seat heaters (left, right, rear)
-- Cabin overheat protection
-
-**Numbers**:
-
-- Charge limit %, charging amps
+- Wake up (does not require signing)
+- Force data update (refreshes cached data only)
 
 **Device Tracker**:
 
@@ -159,11 +151,19 @@ After adding the integration, open its options dialog:
 
 **Updates**:
 
-- Software update status
+- Software update status (read-only; installing requires a signing certificate)
 
 **Text**:
 
 - TeslaMate ID (for syncing)
+
+> **Removed in v5.0.0**: climate control, covers (frunk/trunk/windows/sunroof/
+> charge port), locks, selects (seat/steering heaters, cabin overheat
+> protection), numbers (charge limit/amps), the command switches (charger,
+> sentry, valet, heated steering wheel) and the command buttons (horn, flash
+> lights, HomeLink, remote start, boombox). These required Tesla's signed
+> vehicle-command protocol. Where the state is readable it is now exposed as a
+> sensor or binary sensor above.
 
 ---
 

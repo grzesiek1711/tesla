@@ -1,7 +1,5 @@
 """Tests for the Tesla update."""
 
-from unittest.mock import patch
-
 from homeassistant.components.update import DOMAIN as UPDATE_DOMAIN
 from homeassistant.const import ATTR_ENTITY_ID, STATE_OFF, STATE_ON
 from homeassistant.core import HomeAssistant
@@ -103,16 +101,15 @@ async def test_status_available(hass: HomeAssistant) -> None:
         state.attributes.get("release_url")
         == "https://www.notateslaapp.com/software-updates/version/2022.36.20/release-notes"
     )
-    with patch(
-        "teslajsonpy.car.TeslaCar.schedule_software_update"
-    ) as mock_schedule_software_update:
+    # Installing requires Tesla's signed vehicle-command protocol and is no
+    # longer supported.
+    with pytest.raises(HomeAssistantError):
         await hass.services.async_call(
             UPDATE_DOMAIN,
             "install",
             {ATTR_ENTITY_ID: "update.my_model_s_software_update"},
             blocking=True,
         )
-        mock_schedule_software_update.assert_awaited_once()
 
 
 async def test_status_scheduled(hass: HomeAssistant) -> None:
@@ -140,16 +137,15 @@ async def test_status_scheduled(hass: HomeAssistant) -> None:
         state.attributes.get("release_url")
         == "https://www.notateslaapp.com/software-updates/version/2022.36.20/release-notes"
     )
-    with patch(
-        "teslajsonpy.car.TeslaCar.schedule_software_update"
-    ) as mock_schedule_software_update:
+    # Installing requires Tesla's signed vehicle-command protocol and is no
+    # longer supported.
+    with pytest.raises(HomeAssistantError):
         await hass.services.async_call(
             UPDATE_DOMAIN,
             "install",
             {ATTR_ENTITY_ID: "update.my_model_s_software_update"},
             blocking=True,
         )
-        mock_schedule_software_update.assert_awaited_once()
 
 
 async def test_status_installing(hass: HomeAssistant) -> None:

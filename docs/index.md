@@ -56,21 +56,20 @@
 
 - Core coordinator (`TeslaDataUpdateCoordinator`)
 - Base entity classes and hierarchy
-- Platform modules (entities by domain):
-  - Sensors (battery, charging, temperature, etc.)
-  - Switches (charger, sentry, polling, etc.)
-  - Climate control
-  - Covers (frunk, trunk, windows, etc.)
-  - Buttons (actions)
+- Platform modules (entities by domain, read-only as of v5.0.0):
+  - Sensors (battery, charging, temperature, climate status, etc.)
   - Binary sensors (state indicators)
-  - Locks (door and charge port)
-  - Selects (options)
-  - Numbers (numeric controls)
+  - Switches (local polling only)
+  - Buttons (wake up, force data update)
   - Device tracker (location)
-  - Updates (software version)
+  - Updates (software version, read-only)
   - Text (configuration)
 - Support modules (config flow, TeslaMate, services)
 - Responsibility matrix
+
+> **Note (v5.0.0)**: `climate`, `cover`, `lock`, `select` and `number`
+> platforms, plus the command switches/buttons, were removed because sending
+> commands now requires Tesla's signed vehicle-command protocol.
 
 **Use when**: You need to find or understand a specific component or entity type
 
@@ -118,7 +117,7 @@
 - Integration setup and initialization flow
 - Device discovery and entity creation
 - Data polling and update coordination
-- Command execution workflow (lock, climate, etc.)
+- Wake up and force data update actions (read-only)
 - Configuration options flow
 - TeslaMate synchronization flow
 - Device removal and cleanup
@@ -235,5 +234,5 @@ Each file is designed to be self-contained but cross-references related document
 
 ---
 
-**Last Updated**: Generated for Tesla Custom Integration v4.0.0
-**Focus**: Home Assistant custom component with cloud polling, supporting Tesla vehicles
+**Last Updated**: Generated for Tesla Custom Integration v5.0.0
+**Focus**: Home Assistant custom component with cloud polling, providing read-only monitoring of Tesla vehicles

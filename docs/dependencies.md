@@ -40,17 +40,16 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.components.sensor import SensorEntity, SensorDeviceClass
 from homeassistant.components.binary_sensor import BinarySensorEntity
 from homeassistant.components.switch import SwitchEntity
-from homeassistant.components.climate import ClimateEntity
-from homeassistant.components.cover import CoverEntity
 from homeassistant.components.button import ButtonEntity
-from homeassistant.components.lock import LockEntity
-from homeassistant.components.select import SelectEntity
-from homeassistant.components.number import NumberEntity
 from homeassistant.components.device_tracker import TrackerEntity
-from homeassistant.components.update import UpdateEntity
+from homeassistant.components.update import UpdateEntity, UpdateEntityFeature
 from homeassistant.components.text import TextEntity
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 ```
+
+> **Removed in v5.0.0**: imports of `ClimateEntity`, `CoverEntity`,
+> `LockEntity`, `SelectEntity` and `NumberEntity`. Those platforms were removed
+> because sending commands requires Tesla's signed vehicle-command protocol.
 
 **Framework Concepts**:
 
@@ -82,8 +81,8 @@ from teslajsonpy.exceptions import (
 **Main Functionality**:
 
 - OAuth 2.0 authentication
-- Vehicle data fetching
-- Command execution (lock, climate, etc.)
+- Vehicle data fetching (read-only)
+- Wake up support
 - Error handling and retry logic
 
 **API Methods**:
@@ -92,16 +91,16 @@ from teslajsonpy.exceptions import (
 # Authentication
 api.authenticate(refresh_token)
 
-# Vehicles
+# Vehicles (read-only)
 vehicles = await api.get_vehicles()
 vehicle = await api.get_vehicle(vehicle_id)
-
-# Commands
-await vehicle.lock_doors()
-await vehicle.unlock_doors()
-await vehicle.start_climate()
-await vehicle.set_climate_temperature(temp)
+data = await vehicle.get_latest_vehicle_data()
+await vehicle.wake_up()  # does not require command signing
 ```
+
+> **Note (v5.0.0)**: command methods (lock/unlock, climate, charge start/stop,
+> etc.) are no longer used — sending commands requires Tesla's signed
+> vehicle-command protocol.
 
 **Why Custom Fork**:
 
@@ -328,7 +327,7 @@ pre-commit run --all-files  # Run manually
 
 ```mermaid
 graph TB
-    IntegrationCode["Integration Code<br/>(16 Python modules)"]
+    IntegrationCode["Integration Code<br/>(14 Python modules)"]
 
     IntegrationCode --> HomeAssistant["Home Assistant<br/>Entity Framework"]
     IntegrationCode --> teslajsonpy["teslajsonpy<br/>Tesla API"]
@@ -398,7 +397,7 @@ pytest-httpx = ">=0.24.0"
   "dependencies": ["http"],
   "requirements": ["git+https://github.com/grzesiek1711/teslajsonpy.git@dev"],
   "homeassistant": "2024.11.0",
-  "version": "4.0.0"
+  "version": "5.0.0"
 }
 ```
 
@@ -413,13 +412,16 @@ pytest-httpx = ">=0.24.0"
 **Rate Limits**: Varies by endpoint  
 **Timeout**: Typically 30 seconds
 
-**Endpoints Used** (via teslajsonpy):
+**Endpoints Used** (via teslajsonpy, read-only as of v5.0.0):
 
 ```
 GET  /api/1/vehicles                    # List vehicles
-GET  /api/1/vehicles/{id}/data          # Get vehicle state
-POST /api/1/vehicles/{id}/command/...   # Execute commands
+GET  /api/1/vehicles/{id}/vehicle_data  # Get vehicle state
+POST /api/1/vehicles/{id}/wake_up       # Wake up (no signing required)
 ```
+
+> Command endpoints (`/command/...`) are no longer called; they require
+> Tesla's signed vehicle-command protocol.
 
 ---
 

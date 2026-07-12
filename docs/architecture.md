@@ -11,7 +11,7 @@ graph TB
     TDC["TeslaDataUpdateCoordinator<br/>Central Hub"]
     TAC["Tesla API Client<br/>teslajsonpy"]
 
-    Entities["Entity Platforms<br/>Sensors, Switches, Climate, etc."]
+    Entities["Entity Platforms<br/>Sensors, Binary Sensors, etc. (read-only)"]
 
     HA --> CF
     CF --> TDC
@@ -100,11 +100,11 @@ graph TB
     TBE --> TCE
 
     TCE --> S1["Sensors"]
-    TCE --> S2["Switches"]
-    TCE --> S3["Climate"]
-    TCE --> S4["Covers"]
-    TCE --> S5["Locks"]
-    TCE --> S6["...Other Car Entities"]
+    TCE --> S2["Binary Sensors"]
+    TCE --> S3["Switch (polling)"]
+    TCE --> S4["Buttons"]
+    TCE --> S5["Device Tracker"]
+    TCE --> S6["Update / Text"]
 ```
 
 **Entity Lifecycle**:
@@ -115,20 +115,21 @@ graph TB
 4. Update their state in Home Assistant state machine
 5. Removed during `async_unload_entry()`
 
-**Platform Modules** (one per entity domain):
+**Platform Modules** (one per entity domain, all read-only as of v5.0.0):
 
-- `sensor.py` - Numeric and text state values
-- `binary_sensor.py` - On/off state indicators
-- `switch.py` - Toggle controls
-- `climate.py` - HVAC temperature and modes
-- `cover.py` - Openable/closable elements
-- `button.py` - One-time action triggers
-- `lock.py` - Lock/unlock controls
-- `select.py` - Option selectors
-- `number.py` - Numeric setters
-- `device_tracker.py` - Location tracking
-- `update.py` - Software version tracking
-- `text.py` - Text configuration
+- `sensor.py` - Numeric and text state values (28 classes)
+- `binary_sensor.py` - On/off state indicators (23 classes)
+- `switch.py` - Local polling toggle only (1 class)
+- `button.py` - Wake up and force data update (2 classes)
+- `device_tracker.py` - Location tracking (2 classes)
+- `update.py` - Software version tracking (read-only)
+- `text.py` - Text configuration (TeslaMate ID)
+
+> **Removed in v5.0.0**: `climate.py`, `cover.py`, `lock.py`, `select.py` and
+> `number.py`, plus the command switches and buttons. Sending commands to the
+> vehicle now requires Tesla's signed vehicle-command protocol, which this
+> integration does not use. Where the corresponding state is readable it is now
+> exposed via sensors/binary sensors.
 
 Each platform implements `async_setup_entry()` to create and register its entities.
 
@@ -225,16 +226,21 @@ sequenceDiagram
     HA->>HA: Update entity state in state machine
 ```
 
-### Command Execution
+### Read-Only Actions
+
+As of v5.0.0 the integration does not send commands to the vehicle. The only
+actions available do not require Tesla's signed vehicle-command protocol:
 
 ```
-1. User triggers action in Home Assistant UI
-2. Entity method called (e.g., async_lock(), async_turn_on())
-3. Entity calls Tesla API via coordinator.api
-4. Tesla processes command and wakes vehicle if needed
-5. Coordinator polls for confirmation
-6. Entity state updated in Home Assistant
+1. User presses "Wake Up" or "Force Data Update" button (or toggles polling)
+2. Entity calls coordinator (wake_up / force refresh only)
+3. Coordinator polls for the latest state
+4. Entity state updated in Home Assistant
 ```
+
+> Commands such as lock/unlock, climate control, opening the trunk/frunk/
+> windows and charge start/stop were removed in v5.0.0 because they require a
+> signing certificate this integration does not use.
 
 ## Key Design Patterns
 
@@ -351,7 +357,7 @@ graph TD
 - OAuth 2.0 authentication
 - Tesla API endpoint abstractions
 - Vehicle data structures
-- Command execution (lock, climate, etc.)
+- Read-only vehicle data retrieval (state, charge, climate, location)
 
 ### asyncio
 

@@ -13,8 +13,7 @@ graph TB
     F --> G["Entity Update"]
     G --> H["HA State Update"]
 
-    I["Command Execution"] --> J["API Call"]
-    J --> K["Data Refresh"]
+    I["Wake Up / Force Update"] --> K["Data Refresh"]
     K --> G
 ```
 
@@ -332,77 +331,58 @@ def device_info(self) -> DeviceInfo:
 
 ---
 
-## 5. Command Execution Workflow
+## 5. Read-Only Actions Workflow
 
-**Triggered**: User action in Home Assistant UI
+**Triggered**: User presses the Wake Up or Force Data Update button, or toggles
+the local polling switch.
 
-### Lock/Unlock Workflow
+As of v5.0.0 the integration does not send commands to the vehicle. The only
+actions available do not require Tesla's signed vehicle-command protocol.
 
-```mermaid
-sequenceDiagram
-    participant UI as User UI
-    participant Entity as Lock Entity
-    participant API as Tesla API
-    participant Vehicle as Vehicle
-    participant Polling as Coordinator Polling
-
-    UI->>Entity: Click Lock
-    Entity->>API: Call lock_doors()
-    API->>Vehicle: Send lock command
-    Vehicle-->>API: Command accepted
-    API-->>Entity: Success
-    Entity->>Polling: async_request_refresh()
-    Polling->>API: Get latest vehicle state
-    API-->>Polling: Updated state
-    Polling->>Entity: Notify of update
-    Entity->>UI: Update lock state
-```
-
-### Climate Control Workflow
+### Wake Up / Force Data Update Workflow
 
 ```mermaid
 sequenceDiagram
     participant UI as User UI
-    participant Climate as Climate Entity
+    participant Entity as Button Entity
+    participant Coordinator as Coordinator
     participant API as Tesla API
     participant Vehicle as Vehicle
 
-    UI->>Climate: Set temperature to 22°C
-    Climate->>API: set_climate_temperature(22)
-    API->>Vehicle: Send climate command
-    Vehicle-->>API: Command accepted
-    API-->>Climate: Success
-    Climate->>Climate: Request immediate refresh
-    Note over Climate: Next polling cycle updates state
+    UI->>Entity: Press "Wake Up" / "Force Data Update"
+    Entity->>Coordinator: wake_up() / async_request_refresh()
+    Coordinator->>API: Get latest vehicle state
+    API->>Vehicle: (wake up if requested)
+    Vehicle-->>API: Updated state
+    API-->>Coordinator: Vehicle data
+    Coordinator->>Entity: Notify of update
+    Entity->>UI: Update state
 ```
 
-### Generic Command Flow
+### Generic Read-Only Flow
 
 **In Entity Method**:
 
 ```python
-async def async_lock(self):
-    # 1. Call Tesla API command
-    result = await self.coordinator.api.lock_doors()
-
-    # 2. Check success
-    if result:
-        # 3. Request fresh data from polling
-        await self.coordinator.async_request_refresh()
-    else:
-        raise HomeAssistantError("Failed to lock doors")
+async def async_press(self):
+    # Wake up / force refresh do not require command signing
+    await self.coordinator.controller.wake_up(self.vin)
+    await self.coordinator.async_request_refresh()
 ```
 
 **Steps**:
 
-1. Call Tesla API method via `coordinator.api`
-2. Tesla API wakes vehicle if sleeping (automatic)
-3. Command executed on vehicle
-4. Response returned to entity
-5. Entity calls `async_request_refresh()` to force update
-6. Coordinator fetches latest state
-7. All listening entities notified
-8. Entity state updates in Home Assistant
+1. User presses a button (wake up or force data update) or toggles polling
+2. Entity calls the coordinator (wake up or force refresh only)
+3. Coordinator fetches the latest state from the Tesla API
+4. All listening entities notified
+5. Entity state updates in Home Assistant
+
+> **Removed in v5.0.0**: command workflows such as lock/unlock, climate
+> control, opening the trunk/frunk/windows, charge start/stop, sentry/valet
+> toggling and installing software updates. These required Tesla's signed
+> vehicle-command protocol and a signing certificate this integration does not
+> use.
 
 ---
 
@@ -600,14 +580,14 @@ elif vehicle_state["state"] == "online":
 
 Vehicles wake automatically when:
 
-- Commands sent (lock, climate, etc.)
+- The "Wake Up" button is pressed
 - User manually wakes via Tesla app
 - Scheduled wake (if configured)
 
 Integration respects wake by:
 
-- Not sending commands to asleep vehicles
-- Polling after command (expects vehicle to be awake)
+- Not actively waking asleep vehicles during polling
+- Polling after an explicit wake up (expects vehicle to be awake)
 - Continuing without error if vehicle doesn't wake
 
 ### Polling Policy Application
