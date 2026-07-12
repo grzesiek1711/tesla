@@ -464,9 +464,11 @@ class TeslaDataUpdateCoordinator(DataUpdateCoordinator):
         )
 
         car = self._get_car()
+        # Note: rely on ``sentry_mode`` only. ``sentry_mode_available`` is not
+        # published over TeslaMate MQTT, so requiring it would keep the sentry
+        # interval from ever activating when data arrives via MQTT.
         sentry_active = bool(
             car is not None
-            and getattr(car, "sentry_mode_available", False)
             and getattr(car, "sentry_mode", False)
             and sentry_interval != normal_interval
         )
@@ -528,12 +530,7 @@ class TeslaDataUpdateCoordinator(DataUpdateCoordinator):
             )
             self.hass.bus.async_fire(
                 EVENT_SENTRY_DISPLAY,
-                {
-                    "vin": car.vin,
-                    "name": car.display_name,
-                    "sentry_mode": sentry_on,
-                    "center_display_state": display_state,
-                },
+                {"name": car.display_name},
             )
         self._sentry_display_event_active = condition
 

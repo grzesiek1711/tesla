@@ -186,8 +186,8 @@ The integration fires `tesla_extended_sentry_display` (const
 `EVENT_SENTRY_DISPLAY`) on the Home Assistant event bus. It is **edge-triggered**
 (fired once when the condition becomes true and re-armed after it clears) when a
 vehicle has sentry mode enabled and `center_display_state` equals
-`SENTRY_ALERT_DISPLAY_STATE = 7`. Event data: `vin`, `name` (display name),
-`sentry_mode` (bool), `center_display_state` (int). The condition is evaluated
+`SENTRY_ALERT_DISPLAY_STATE = 7`. Event data: `name` (display name). The
+condition is evaluated
 on every car-state change from both the poll path (`_async_update_data`) and the
 TeslaMate MQTT path (`coordinator.async_process_car_state`), so with MQTT
 enabled it fires in near real time.
@@ -473,7 +473,7 @@ The project includes a Docker dev container (`.devcontainer/`):
 | Property           | Value         |
 | ------------------ | ------------- |
 | **Domain**         | tesla_extended  |
-| **Version**        | 1.3.0         |
+| **Version**        | 1.4.0         |
 | **Min HA Version** | 2024.11.0     |
 | **License**        | Apache-2.0    |
 | **Maintainer**     | @alandtse     |

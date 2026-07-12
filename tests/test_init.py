@@ -341,9 +341,7 @@ async def test_sentry_display_event_fires_once_and_rearms(
     coordinator._fire_sentry_display_event()
     await hass.async_block_till_done()
     assert len(events) == 1
-    assert events[0].data["vin"] == car.vin
-    assert events[0].data["center_display_state"] == 7
-    assert events[0].data["sentry_mode"] is True
+    assert events[0].data == {"name": car.display_name}
 
     # Condition still holds -> no re-fire.
     coordinator._fire_sentry_display_event()
@@ -357,6 +355,23 @@ async def test_sentry_display_event_fires_once_and_rearms(
     coordinator._fire_sentry_display_event()
     await hass.async_block_till_done()
     assert len(events) == 2
+
+
+async def test_sentry_interval_active_without_sentry_available(
+    hass: HomeAssistant,
+) -> None:
+    """Sentry interval activates on sentry_mode alone (TeslaMate MQTT case).
+
+    TeslaMate MQTT publishes ``sentry_mode`` but not ``sentry_mode_available``,
+    so detection must not require the latter.
+    """
+    car = _sentry_car(sentry=True, display=0, available=False)
+    controller = _interval_controller()
+    options = {CONF_SCAN_INTERVAL: 660, CONF_SENTRY_SCAN_INTERVAL: 10}
+    coordinator = _make_coordinator(hass, car, controller, options)
+
+    assert coordinator._async_apply_scan_interval() is True
+    assert controller.get_update_interval_vin(vin=car.vin) == 10
 
 
 async def test_sentry_display_event_requires_sentry_on(hass: HomeAssistant) -> None:

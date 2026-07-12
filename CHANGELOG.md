@@ -2,6 +2,28 @@
 
 
 
+## v1.4.0 (2026-07-12)
+
+### Fix
+
+* fix(polling): honor the sentry polling interval when sentry state arrives over
+  TeslaMate MQTT. Sentry detection no longer requires `sentry_mode_available`
+  (which TeslaMate does not publish), so the sentry interval now activates and
+  the "polling interval" sensor reflects it and the vehicle is refreshed on the
+  configured cadence instead of staying at the normal interval.
+
+* fix(number): the TeslaMate ID no longer reverts to its previous value after
+  being changed; the entity now caches the new value immediately.
+
+* fix(translations): add the missing `polling_policy` option label to the
+  options flow (English and Polish).
+
+### Change
+
+* change(events): the `tesla_extended_sentry_display` event now carries only the
+  vehicle `name`.
+
+
 ## v1.3.0 (2026-07-12)
 
 ### Feature

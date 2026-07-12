@@ -56,6 +56,9 @@ class TeslaCarTeslaMateID(TeslaCarEntity, NumberEntity):
         # string (e.g. "3" rather than "3.0").
         teslamate_id = str(int(value))
 
+        # Update the cached state before writing so the entity does not revert
+        # to the previously stored value on the next coordinator refresh.
+        self._state = teslamate_id
         await self.teslamate.set_car_id(self._car.vin, teslamate_id)
         await self.teslamate.watch_cars()
         self.async_write_ha_state()

@@ -27,6 +27,7 @@
           "enable_wake_on_start": "Wymuś wybudzenie samochodów podczas uruchamiania",
           "scan_interval": "Częstotliwość odpytywania (sekundy)",
           "sentry_scan_interval": "Częstotliwość odpytywania gdy tryb Sentry jest aktywny (sekundy)",
+          "polling_policy": "Zasady odpytywania",
           "enable_teslamate": "Synchronizuj dane z TeslaMate przez MQTT"
         }
       }

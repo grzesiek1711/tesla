@@ -203,12 +203,9 @@ trigger:
 The event is edge-triggered (fired once when the condition becomes true and
 re-armed after it clears) and carries this data:
 
-| Field                  | Description                             |
-| ---------------------- | --------------------------------------- |
-| `vin`                  | Vehicle VIN                             |
-| `name`                 | Vehicle display name                    |
-| `sentry_mode`          | `true` while sentry mode is active      |
-| `center_display_state` | The center display state (`7`)          |
+| Field  | Description          |
+| ------ | -------------------- |
+| `name` | Vehicle display name |
 
 When TeslaMate MQTT sync is enabled the event fires in near real time; with
 cloud polling only it fires on the next poll.

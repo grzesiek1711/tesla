@@ -565,12 +565,9 @@ becomes true and is re-armed after it clears.
 
 **Event Data**:
 
-| Field                  | Type | Description                        |
-| ---------------------- | ---- | ---------------------------------- |
-| `vin`                  | str  | Vehicle VIN                        |
-| `name`                 | str  | Vehicle display name               |
-| `sentry_mode`          | bool | `true` while sentry mode is active |
-| `center_display_state` | int  | Center display state (`7`)         |
+| Field  | Type | Description          |
+| ------ | ---- | -------------------- |
+| `name` | str  | Vehicle display name |
 
 **Timing**: Evaluated on every car-state change. With TeslaMate MQTT sync
 enabled it fires in near real time; with cloud polling only it fires on the

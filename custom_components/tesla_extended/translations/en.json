@@ -27,6 +27,7 @@
           "enable_wake_on_start": "Force cars awake on startup",
           "scan_interval": "Seconds between polling",
           "sentry_scan_interval": "Seconds between polling when sentry mode is active",
+          "polling_policy": "Polling policy",
           "enable_teslamate": "Sync Data from TeslaMate via MQTT"
         }
       }

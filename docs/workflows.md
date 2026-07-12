@@ -280,8 +280,8 @@ On every car-state change the coordinator evaluates each vehicle and fires the
 `tesla_extended_sentry_display` event on the Home Assistant event bus when
 sentry mode is enabled and `center_display_state == 7`. The event is
 edge-triggered (fired once when the condition becomes true and re-armed after it
-clears) and carries `vin`, `name`, `sentry_mode` and `center_display_state`.
-Because it is evaluated on every car-state change, it fires from both the
+clears) and carries the vehicle `name` (display name). Because it is evaluated
+on every car-state change, it fires from both the
 cloud-poll path (Section 3) and the TeslaMate MQTT path (Section 6), so with
 MQTT enabled it fires in near real time.
 
