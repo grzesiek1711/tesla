@@ -376,8 +376,8 @@ class Vehicle:
     async def get_latest_vehicle_data() -> dict
     async def wake_up() -> dict  # does not require command signing
     # NOTE: command methods (lock_doors, unlock_doors, set_climate_temperature,
-    # start_climate, stop_climate, etc.) are no longer used as of v5.0.0 —
-    # sending commands requires Tesla's signed vehicle-command protocol.
+    # start_climate, stop_climate, etc.) are not used — sending commands
+    # requires Tesla's signed vehicle-command protocol.
 ```
 
 ---
@@ -584,6 +584,8 @@ entity: TeslaCarEntity
 vol.Required(CONF_TOKEN): cv.string
 vol.Optional(CONF_POLLING_INTERVAL, default=660):
     vol.Range(min=60, max=3600)
+vol.Optional(CONF_SENTRY_SCAN_INTERVAL, default=660):
+    vol.Range(min=10, max=3600)
 
 # Service validation
 SERVICE_SCHEMA = vol.Schema({

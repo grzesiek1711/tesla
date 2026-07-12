@@ -172,15 +172,9 @@ Device Tracker                 2 classes
 Update                         1 class
 └── Software Version Status (read-only)
 
-Text                           1 class
-└── TeslaMate ID Configuration
+Number                         1 class
+└── TeslaMate ID (numeric car id for TeslaMate MQTT syncing)
 ```
-
-> **Removed in v5.0.0**: the `climate`, `cover`, `lock`, `select` and `number`
-> platforms, the command switches (charger, sentry, valet, heated steering
-> wheel) and the command buttons (horn, flash lights, HomeLink, remote start,
-> boombox). These required Tesla's signed vehicle-command protocol. Where the
-> state is readable it is now exposed as a sensor or binary sensor above.
 
 Total: 28 + 23 + 1 + 2 + 2 + 1 + 1 = 58 entity classes across 7 platforms.
 
@@ -287,11 +281,6 @@ class TeslaBinarySensorClass(TeslaCarEntity, BinarySensorEntity):
 
 - `TeslaCarPolling` - Enable/disable polling for the vehicle (local only)
 
-> **Removed in v5.0.0**: `TeslaCarCharger`, `TeslaCarSentryMode`,
-> `TeslaCarValetMode` and `TeslaCarHeatedSteeringWheel`. These commanded the
-> vehicle and required Tesla's signed vehicle-command protocol. Sentry and
-> valet state are now exposed as read-only binary sensors.
-
 **Pattern**:
 
 ```python
@@ -308,23 +297,6 @@ class TeslaCarPolling(TeslaCarEntity, SwitchEntity):
         return self.coordinator.controller.is_car_polling_enabled(self.vin)
 ```
 
-### Removed Command Platforms (`climate.py`, `cover.py`, `lock.py`, `select.py`, `number.py`)
-
-> **Removed in v5.0.0.** These platforms sent commands to the vehicle and
-> required Tesla's signed vehicle-command protocol and a signing certificate,
-> which this integration does not use:
->
-> - `climate.py` - `TeslaCarClimate` (HVAC control)
-> - `cover.py` - frunk, trunk, windows, sunroof, charger door
-> - `lock.py` - door lock, charge port latch
-> - `select.py` - seat heaters, steering wheel heater, cabin overheat protection
-> - `number.py` - charge limit, charging amps
->
-> Where the underlying state is readable, it is now exposed through the
-> read-only sensors and binary sensors described above (e.g. climate on,
-> frunk/trunk/sunroof open, doors lock, charge limit, charging amps, seat
-> heater levels, cabin overheat protection).
-
 ### Button Platform (`button.py`)
 
 **Implements**: One-time action triggers (read-only actions only)
@@ -333,11 +305,6 @@ class TeslaCarPolling(TeslaCarEntity, SwitchEntity):
 
 - `TeslaCarWakeUp` - Wake sleeping vehicle (does not require signing)
 - `TeslaCarForceDataUpdate` - Force a data refresh of cached data
-
-> **Removed in v5.0.0**: `TeslaCarHorn`, `TeslaCarFlashLights`,
-> `TeslaCarTriggerHomelink`, `TeslaCarRemoteStart` and the boombox/emissions
-> test button. These commanded the vehicle and required Tesla's signed
-> vehicle-command protocol.
 
 **Pattern**:
 
@@ -387,17 +354,17 @@ class TeslaLocationClass(TeslaCarEntity, TrackerEntity):
 - Show update status (available, scheduled, downloading, installing) and
   install progress
 
-> **Read-only (v5.0.0)**: `supported_features` exposes only
-> `UpdateEntityFeature.PROGRESS`; `async_install` was removed because
+> **Read-only**: `supported_features` exposes only
+> `UpdateEntityFeature.PROGRESS`; there is no `async_install` because
 > installing an update requires Tesla's signed vehicle-command protocol.
 
-### Text Platform (`text.py`)
+### Number Platform (`number.py`)
 
-**Implements**: Text configuration
+**Implements**: Numeric configuration input
 
 **Key Class**: `TeslaCarTeslaMateID`
 
-**Purpose**: Store/retrieve TeslaMate integration identifier
+**Purpose**: Store/retrieve the numeric TeslaMate car id used for TeslaMate MQTT syncing
 
 ---
 
@@ -430,6 +397,7 @@ class TeslaLocationClass(TeslaCarEntity, TrackerEntity):
 **Options**:
 
 - `polling_interval` - Seconds between updates (default: 660)
+- `sentry_scan_interval` - Polling interval (seconds, min 10, default 660) used while sentry mode is active on any vehicle
 - `wake_on_start` - Wake sleeping cars on HA startup
 - `polling_policy` - When to allow cars to sleep
 - `teslamate_enabled` - Enable TeslaMate sync
@@ -495,7 +463,7 @@ data:
 | TeslaMate     | -     | -      | ✓       | ✓        |
 | Services      | -     | -      | -       | -        |
 
-> As of v5.0.0 no component sends commands to the vehicle; the integration is
+> No component sends commands to the vehicle; the integration is
 > read-only apart from wake up, force data update and the local polling switch.
 
 ---

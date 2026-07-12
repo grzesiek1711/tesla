@@ -37,10 +37,7 @@ tesla/
 │   ├── button.py                         # Buttons (wake up, force data update)
 │   ├── device_tracker.py                 # Location tracking (2 classes)
 │   ├── update.py                         # Software update entity (read-only)
-│   ├── text.py                           # Text input (TeslaMate ID)
-│   │                                     # NOTE: climate.py, cover.py, lock.py,
-│   │                                     # select.py and number.py were removed
-│   │                                     # in v5.0.0 (required command signing)
+│   ├── number.py                         # Number input (TeslaMate ID, numeric car id)
 │   │
 │   ├── manifest.json                     # Home Assistant integration metadata
 │   └── strings.json                      # Internationalization strings
@@ -122,7 +119,7 @@ TeslaBaseEntity
 
 **Pattern**: Each file (e.g., `sensor.py`, `binary_sensor.py`) implements `async_setup_entry()` which creates entities for its domain.
 
-**Entity Classes (read-only, v5.0.0)**:
+**Entity Classes (read-only)**:
 
 - Sensors: 28 classes (battery, temperature, range, charging, charge limit/amps,
   voltage/current, climate status, seat heater levels, speed, power, heading, etc.)
@@ -132,13 +129,7 @@ TeslaBaseEntity
 - Buttons: 2 classes (wake up, force data update)
 - Device Tracker: 2 classes (location, destination)
 - Update: 1 class (software version, read-only)
-- Text: 1 class (TeslaMate ID)
-
-> **Removed in v5.0.0** (required Tesla's signed vehicle-command protocol):
-> `climate`, `cover`, `lock`, `select` and `number` platforms, plus the command
-> switches (charger, sentry, valet, heated steering wheel) and command buttons
-> (horn, flash lights, HomeLink, remote start, boombox). Readable state was
-> moved to the sensors/binary sensors above.
+- Number: 1 class (TeslaMate ID, numeric car id used for TeslaMate MQTT syncing)
 
 ### 4. Configuration: `config_flow.py`
 
@@ -375,6 +366,7 @@ The project includes a Docker dev container (`.devcontainer/`):
 ### User Options
 
 - **polling_interval**: Seconds between updates (60-3600, default 660)
+- **sentry_scan_interval**: Polling interval (seconds, min 10, default 660) used while sentry mode is active on any vehicle
 - **wake_on_start**: Wake cars when HA starts (default: false)
 - **polling_policy**: Sleep optimization strategy (default: always)
 - **teslamate_enabled**: Enable MQTT sync (default: false)
@@ -456,7 +448,7 @@ The project includes a Docker dev container (`.devcontainer/`):
 | Property           | Value         |
 | ------------------ | ------------- |
 | **Domain**         | tesla_extended  |
-| **Version**        | 5.1.0         |
+| **Version**        | 1.2.0         |
 | **Min HA Version** | 2024.11.0     |
 | **License**        | Apache-2.0    |
 | **Maintainer**     | @alandtse     |

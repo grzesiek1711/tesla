@@ -2,6 +2,27 @@
 
 
 
+## v1.2.0 (2026-07-12)
+
+### Feature
+
+* feat(number): the TeslaMate ID is now a numeric **number** entity instead of a
+  free-text input, so it only accepts a valid numeric TeslaMate car id. The
+  `text` platform was replaced by a `number` platform.
+
+* feat(config): add a **Sentry Polling Interval** option (`sentry_scan_interval`,
+  default 660 s, min 10 s). When sentry mode is active on any vehicle the
+  integration polls at this interval instead of the normal polling interval.
+  Leave it equal to the normal interval for unchanged behavior.
+
+### Breaking Change
+
+* The TeslaMate ID entity moves from the `text` domain to the `number` domain
+  (`text.*_teslamate_id` → `number.*_teslamate_id`). The entity is disabled by
+  default; any automation or dashboard referencing the old text entity id must
+  be updated.
+
+
 ## v1.1.0 (2026-07-12)
 
 Expanded TeslaMate MQTT coverage so far more entities update in near real-time

@@ -28,10 +28,12 @@ from .const import (
     CONF_EXPIRATION,
     CONF_INCLUDE_VEHICLES,
     CONF_POLLING_POLICY,
+    CONF_SENTRY_SCAN_INTERVAL,
     CONF_WAKE_ON_START,
     DEFAULT_ENABLE_TESLAMATE,
     DEFAULT_POLLING_POLICY,
     DEFAULT_SCAN_INTERVAL,
+    DEFAULT_SENTRY_SCAN_INTERVAL,
     DEFAULT_WAKE_ON_START,
     DOMAIN,
     MIN_SCAN_INTERVAL,
@@ -137,6 +139,12 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                     CONF_SCAN_INTERVAL,
                     default=self.config_entry.options.get(
                         CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL
+                    ),
+                ): vol.All(cv.positive_int, vol.Clamp(min=MIN_SCAN_INTERVAL)),
+                vol.Optional(
+                    CONF_SENTRY_SCAN_INTERVAL,
+                    default=self.config_entry.options.get(
+                        CONF_SENTRY_SCAN_INTERVAL, DEFAULT_SENTRY_SCAN_INTERVAL
                     ),
                 ): vol.All(cv.positive_int, vol.Clamp(min=MIN_SCAN_INTERVAL)),
                 vol.Optional(

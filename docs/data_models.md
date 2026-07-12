@@ -256,6 +256,7 @@ config_entry.data = {
 
 config_entry.options = {
     "polling_interval": int,            # Seconds (default: 660)
+    "sentry_scan_interval": int,        # Seconds while sentry mode active (default: 660)
     "wake_on_start": bool,              # Wake cars on HA startup (default: False)
     "polling_policy": str,              # "polling_policy_*" (see below)
     "teslamate_enabled": bool,          # Enable TeslaMate sync (default: False)
@@ -324,15 +325,31 @@ switch_entity = {
 }
 ```
 
-> The only switch as of v5.0.0 is the local **Polling** switch; it does not
+> The only switch is the local **Polling** switch; it does not
 > command the vehicle.
 
-### Removed Entity Attribute Models (v5.0.0)
+### Number Attributes
 
-> The **Climate**, **Cover** and **Lock** entities were removed in v5.0.0
-> because controlling them requires Tesla's signed vehicle-command protocol.
-> The underlying state is still read from the vehicle schema below and exposed
-> through read-only sensors and binary sensors (e.g. `TeslaCarClimateOn`,
+```python
+number_entity = {
+    "state": "1",                       # Numeric TeslaMate car id
+    "attributes": {
+        "mode": "box",
+        "friendly_name": "TeslaMate ID",
+        "vehicle_name": "My Tesla",
+    }
+}
+```
+
+> The only number is `TeslaCarTeslaMateID`, a numeric car id used for
+> TeslaMate MQTT syncing.
+
+### Read-Only Climate, Cover and Lock State
+
+> The integration does not provide **Climate**, **Cover** or **Lock** command
+> entities because controlling them requires Tesla's signed vehicle-command
+> protocol. The underlying state is read from the vehicle schema below and
+> exposed through read-only sensors and binary sensors (e.g. `TeslaCarClimateOn`,
 > `TeslaCarFrunk`/`TeslaCarTrunk`/`TeslaCarSunRoof`, `TeslaCarDoorsLock`,
 > `TeslaCarChargePortLatch`).
 
@@ -377,6 +394,7 @@ CONFIG_SCHEMA = vol.Schema({
 # Options schema
 OPTIONS_SCHEMA = vol.Schema({
     vol.Optional("polling_interval", default=660): vol.Range(min=60, max=3600),
+    vol.Optional("sentry_scan_interval", default=660): vol.Range(min=10, max=3600),
     vol.Optional("wake_on_start", default=False): cv.boolean,
     vol.Optional("polling_policy", default="polling_policy_always"): vol.In([
         "polling_policy_always",

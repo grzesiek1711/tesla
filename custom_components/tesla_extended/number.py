@@ -1,6 +1,6 @@
-"""Support for Tesla text entities."""
+"""Support for Tesla number entities."""
 
-from homeassistant.components.text import TextEntity, TextMode
+from homeassistant.components.number import NumberEntity, NumberMode
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import EntityCategory
 from teslajsonpy.car import TeslaCar
@@ -12,7 +12,7 @@ from .teslamate import TeslaMate
 
 
 async def async_setup_entry(hass: HomeAssistant, config_entry, async_add_entities):
-    """Set up the Tesla text entities by config_entry."""
+    """Set up the Tesla number entities by config_entry."""
     entry_data = hass.data[DOMAIN][config_entry.entry_id]
     coordinators = entry_data["coordinators"]
     cars = entry_data["cars"]
@@ -26,12 +26,15 @@ async def async_setup_entry(hass: HomeAssistant, config_entry, async_add_entitie
     async_add_entities(entities, update_before_add=True)
 
 
-class TeslaCarTeslaMateID(TeslaCarEntity, TextEntity):
-    """Representation of a Tesla car charge limit number."""
+class TeslaCarTeslaMateID(TeslaCarEntity, NumberEntity):
+    """Representation of the numeric TeslaMate car ID used for MQTT syncing."""
 
     type = "teslamate id"
     _attr_icon = "mdi:ev-station"
-    _attr_mode = TextMode.TEXT
+    _attr_mode = NumberMode.BOX
+    _attr_native_min_value = 1
+    _attr_native_max_value = 65535
+    _attr_native_step = 1
     _enabled_by_default = False
     _attr_entity_category = EntityCategory.CONFIG
 
@@ -41,17 +44,19 @@ class TeslaCarTeslaMateID(TeslaCarEntity, TextEntity):
         coordinator: TeslaDataUpdateCoordinator,
         teslamate: TeslaMate,
     ) -> None:
-        """Initialize charge limit entity."""
+        """Initialize the TeslaMate ID entity."""
         self.teslamate = teslamate
         self._state = None
         super().__init__(car, coordinator)
 
-    async def async_set_value(self, value: str) -> None:
-        """Update charge limit."""
-        if value.strip() == "":
-            value = None
+    async def async_set_native_value(self, value: float) -> None:
+        """Update the TeslaMate car ID."""
+        # TeslaMate identifies cars with integer ids that are compared against
+        # the MQTT topic segments (strings), so store the id as a plain integer
+        # string (e.g. "3" rather than "3.0").
+        teslamate_id = str(int(value))
 
-        await self.teslamate.set_car_id(self._car.vin, value)
+        await self.teslamate.set_car_id(self._car.vin, teslamate_id)
         await self.teslamate.watch_cars()
         self.async_write_ha_state()
 
@@ -61,6 +66,11 @@ class TeslaCarTeslaMateID(TeslaCarEntity, TextEntity):
         self._state = await self.teslamate.get_car_id(self._car.vin)
 
     @property
-    def native_value(self) -> str:
-        """Return charge limit."""
-        return self._state
+    def native_value(self) -> float | None:
+        """Return the TeslaMate car ID."""
+        if self._state is None:
+            return None
+        try:
+            return int(self._state)
+        except (TypeError, ValueError):
+            return None

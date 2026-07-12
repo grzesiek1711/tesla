@@ -163,6 +163,7 @@ graph TD
 1. Show form with options fields
 2. User configures:
    - `polling_interval`: 60-3600 seconds
+   - `sentry_scan_interval`: 10-3600 seconds, polling interval used while sentry mode is active on any vehicle
    - `wake_on_start`: Wake vehicles on HA startup
    - `polling_policy`: Sleep/polling strategy
    - `teslamate_enabled`: Enable MQTT sync
@@ -171,6 +172,7 @@ graph TD
 
 ```python
 polling_interval: 660
+sentry_scan_interval: 660
 wake_on_start: False
 polling_policy: "polling_policy_always"
 teslamate_enabled: False
@@ -336,8 +338,8 @@ def device_info(self) -> DeviceInfo:
 **Triggered**: User presses the Wake Up or Force Data Update button, or toggles
 the local polling switch.
 
-As of v5.0.0 the integration does not send commands to the vehicle. The only
-actions available do not require Tesla's signed vehicle-command protocol.
+The integration does not send commands to the vehicle. The only actions
+available do not require Tesla's signed vehicle-command protocol.
 
 ### Wake Up / Force Data Update Workflow
 
@@ -377,12 +379,6 @@ async def async_press(self):
 3. Coordinator fetches the latest state from the Tesla API
 4. All listening entities notified
 5. Entity state updates in Home Assistant
-
-> **Removed in v5.0.0**: command workflows such as lock/unlock, climate
-> control, opening the trunk/frunk/windows, charge start/stop, sentry/valet
-> toggling and installing software updates. These required Tesla's signed
-> vehicle-command protocol and a signing certificate this integration does not
-> use.
 
 ---
 

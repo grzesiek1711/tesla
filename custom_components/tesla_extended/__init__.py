@@ -34,11 +34,13 @@ from .const import (
     CONF_EXPIRATION,
     CONF_INCLUDE_VEHICLES,
     CONF_POLLING_POLICY,
+    CONF_SENTRY_SCAN_INTERVAL,
     CONF_WAKE_ON_START,
     DATA_LISTENER,
     DEFAULT_ENABLE_TESLAMATE,
     DEFAULT_POLLING_POLICY,
     DEFAULT_SCAN_INTERVAL,
+    DEFAULT_SENTRY_SCAN_INTERVAL,
     DEFAULT_WAKE_ON_START,
     DOMAIN,
     MIN_SCAN_INTERVAL,
@@ -421,9 +423,48 @@ class TeslaDataUpdateCoordinator(DataUpdateCoordinator):
             update_interval=update_interval,
         )
 
+    @callback
+    def _async_apply_sentry_scan_interval(self) -> None:
+        """Adjust the controller poll interval based on sentry mode.
+
+        When sentry mode is active on any tracked vehicle, the dedicated sentry
+        polling interval is used so events are picked up on the desired cadence;
+        otherwise the normal polling interval applies. The interval is shared by
+        the underlying controller, so the sentry interval takes effect as soon
+        as any vehicle reports sentry mode on.
+        """
+        options = getattr(self.config_entry, "options", None) or {}
+        normal_interval = options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)
+        sentry_interval = options.get(
+            CONF_SENTRY_SCAN_INTERVAL, DEFAULT_SENTRY_SCAN_INTERVAL
+        )
+
+        # No behaviour change if the sentry interval matches the normal one.
+        if sentry_interval == normal_interval:
+            return
+
+        entry_data = self.hass.data.get(DOMAIN, {}).get(self.config_entry.entry_id, {})
+        cars = entry_data.get("cars", {})
+        sentry_active = any(
+            getattr(car, "sentry_mode_available", False)
+            and getattr(car, "sentry_mode", False)
+            for car in cars.values()
+        )
+
+        desired = sentry_interval if sentry_active else normal_interval
+        if self.controller.update_interval != desired:
+            _LOGGER.debug(
+                "Adjusting update_interval from %s to %s (sentry_active=%s)",
+                self.controller.update_interval,
+                desired,
+                sentry_active,
+            )
+            self.controller.update_interval = desired
+
     async def _async_update_data(self):
         """Fetch data from API endpoint."""
         controller = self.controller
+        self._async_apply_sentry_scan_interval()
         if controller.is_token_refreshed():
             # It doesn't matter which coordinator calls this, as long as there
             # are no awaits in the below code, it will be called only once.

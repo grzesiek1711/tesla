@@ -56,20 +56,16 @@
 
 - Core coordinator (`TeslaDataUpdateCoordinator`)
 - Base entity classes and hierarchy
-- Platform modules (entities by domain, read-only as of v5.0.0):
+- Platform modules (entities by domain, read-only):
   - Sensors (battery, charging, temperature, climate status, etc.)
   - Binary sensors (state indicators)
   - Switches (local polling only)
   - Buttons (wake up, force data update)
   - Device tracker (location)
   - Updates (software version, read-only)
-  - Text (configuration)
+  - Number (TeslaMate ID, numeric car id for MQTT syncing)
 - Support modules (config flow, TeslaMate, services)
 - Responsibility matrix
-
-> **Note (v5.0.0)**: `climate`, `cover`, `lock`, `select` and `number`
-> platforms, plus the command switches/buttons, were removed because sending
-> commands now requires Tesla's signed vehicle-command protocol.
 
 **Use when**: You need to find or understand a specific component or entity type
 
@@ -234,5 +230,5 @@ Each file is designed to be self-contained but cross-references related document
 
 ---
 
-**Last Updated**: Generated for Tesla Custom Integration v5.0.0
+**Last Updated**: Generated for Tesla Custom Integration v1.2.0
 **Focus**: Home Assistant custom component with cloud polling, providing read-only monitoring of Tesla vehicles

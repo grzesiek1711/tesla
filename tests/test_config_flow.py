@@ -21,10 +21,12 @@ from custom_components.tesla_extended.const import (
     CONF_EXPIRATION,
     CONF_INCLUDE_VEHICLES,
     CONF_POLLING_POLICY,
+    CONF_SENTRY_SCAN_INTERVAL,
     CONF_WAKE_ON_START,
     DEFAULT_ENABLE_TESLAMATE,
     DEFAULT_POLLING_POLICY,
     DEFAULT_SCAN_INTERVAL,
+    DEFAULT_SENTRY_SCAN_INTERVAL,
     DEFAULT_WAKE_ON_START,
     DOMAIN,
     MIN_SCAN_INTERVAL,
@@ -245,6 +247,7 @@ async def test_option_flow(hass):
         result["flow_id"],
         user_input={
             CONF_SCAN_INTERVAL: 350,
+            CONF_SENTRY_SCAN_INTERVAL: 120,
             CONF_WAKE_ON_START: True,
             CONF_POLLING_POLICY: ATTR_POLLING_POLICY_CONNECTED,
             CONF_ENABLE_TESLAMATE: True,
@@ -253,6 +256,7 @@ async def test_option_flow(hass):
     assert result["type"] == "create_entry"
     assert result["data"] == {
         CONF_SCAN_INTERVAL: 350,
+        CONF_SENTRY_SCAN_INTERVAL: 120,
         CONF_WAKE_ON_START: True,
         CONF_POLLING_POLICY: ATTR_POLLING_POLICY_CONNECTED,
         CONF_ENABLE_TESLAMATE: True,
@@ -275,6 +279,7 @@ async def test_option_flow_defaults(hass):
     assert result["type"] == "create_entry"
     assert result["data"] == {
         CONF_SCAN_INTERVAL: DEFAULT_SCAN_INTERVAL,
+        CONF_SENTRY_SCAN_INTERVAL: DEFAULT_SENTRY_SCAN_INTERVAL,
         CONF_WAKE_ON_START: DEFAULT_WAKE_ON_START,
         CONF_POLLING_POLICY: DEFAULT_POLLING_POLICY,
         CONF_ENABLE_TESLAMATE: DEFAULT_ENABLE_TESLAMATE,
@@ -292,11 +297,13 @@ async def test_option_flow_input_floor(hass):
     assert result["step_id"] == "init"
 
     result = await hass.config_entries.options.async_configure(
-        result["flow_id"], user_input={CONF_SCAN_INTERVAL: 1}
+        result["flow_id"],
+        user_input={CONF_SCAN_INTERVAL: 1, CONF_SENTRY_SCAN_INTERVAL: 1},
     )
     assert result["type"] == "create_entry"
     assert result["data"] == {
         CONF_SCAN_INTERVAL: MIN_SCAN_INTERVAL,
+        CONF_SENTRY_SCAN_INTERVAL: MIN_SCAN_INTERVAL,
         CONF_WAKE_ON_START: DEFAULT_WAKE_ON_START,
         CONF_POLLING_POLICY: DEFAULT_POLLING_POLICY,
         CONF_ENABLE_TESLAMATE: DEFAULT_ENABLE_TESLAMATE,

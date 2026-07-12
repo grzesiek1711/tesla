@@ -3,7 +3,7 @@
 ## Project Overview
 
 **Name**: Tesla Custom Integration  
-**Version**: 5.0.0  
+**Version**: 1.2.0  
 **License**: Apache-2.0  
 **Repository**: https://github.com/alandtse/tesla  
 **Domain**: Home Assistant custom component for Tesla vehicles
@@ -18,14 +18,12 @@ Provides read-only Home Assistant monitoring for:
 
 The integration uses cloud polling with intelligent sleep strategies to minimize battery drain while keeping data current.
 
-> **Note (v5.0.0): read-only integration.** Sending commands to the vehicle
+> **Note: read-only integration.** Sending commands to the vehicle
 > (lock/unlock, climate control, opening the trunk/frunk/windows, charge
-> start/stop, etc.) now requires Tesla's signed vehicle-command protocol and a
-> signing certificate, which this integration does not use. The `climate`,
-> `cover`, `lock`, `select` and `number` platforms and the command
-> switches/buttons were removed; readable state is exposed via sensors and
-> binary sensors. Only **wake up** and **force data update** actions and a
-> local **polling** switch remain.
+> start/stop, etc.) requires Tesla's signed vehicle-command protocol and a
+> signing certificate, which this integration does not use. Readable state is
+> exposed via sensors and binary sensors. Only **wake up** and **force data
+> update** actions and a local **polling** switch are available.
 
 ## Technology Stack
 
@@ -71,10 +69,7 @@ tesla/
 │   ├── button.py                       # Button entities (wake up, force update)
 │   ├── device_tracker.py               # Device tracker entities
 │   ├── update.py                       # Update entity (read-only)
-│   ├── text.py                         # Text entity
-│   │                                   # NOTE: climate.py, cover.py, lock.py,
-│   │                                   # select.py and number.py were removed
-│   │                                   # in v5.0.0 (required command signing)
+│   ├── number.py                       # Number entity (TeslaMate ID)
 │   │
 │   ├── manifest.json                   # Home Assistant manifest
 │   └── strings.json                    # i18n strings (if exists)
@@ -154,13 +149,8 @@ TeslaBaseEntity (common methods & properties)
     ├── Buttons (wake up, force data update)
     ├── Device Tracker (location, route destination)
     ├── Update (software version, read-only)
-    └── Text (TeslaMate ID)
+    └── Number (TeslaMate ID)
 ```
-
-> **Removed in v5.0.0**: `Climate`, `Covers`, `Locks`, `Selects` and `Numbers`
-> entity classes, plus the command switches (charger, sentry, valet, heated
-> steering wheel) and command buttons (horn, flash lights, HomeLink, remote
-> start, boombox). These required Tesla's signed vehicle-command protocol.
 
 ## Development Tools & Configuration
 
@@ -256,6 +246,7 @@ prospector                # Full linting
 - OAuth 2.0 token-based authentication
 - REST API for reading vehicle state (read-only; commands require signing)
 - Polling interval configurable (default: 660 seconds)
+- Sentry polling interval (`sentry_scan_interval`, default: 660 seconds, min 10) used while sentry mode is active on any vehicle
 
 ### MQTT Integration (via TeslaMate)
 
@@ -274,4 +265,4 @@ prospector                # Full linting
 
 **Integration Class**: Home Assistant Custom Component  
 **Code Quality**: Type hints throughout, async/await patterns, comprehensive tests  
-**Maintenance**: Active (version 5.0.0 as of latest documentation)
+**Maintenance**: Active (version 1.2.0 as of latest documentation)

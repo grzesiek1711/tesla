@@ -43,13 +43,9 @@ from homeassistant.components.switch import SwitchEntity
 from homeassistant.components.button import ButtonEntity
 from homeassistant.components.device_tracker import TrackerEntity
 from homeassistant.components.update import UpdateEntity, UpdateEntityFeature
-from homeassistant.components.text import TextEntity
+from homeassistant.components.number import NumberEntity
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 ```
-
-> **Removed in v5.0.0**: imports of `ClimateEntity`, `CoverEntity`,
-> `LockEntity`, `SelectEntity` and `NumberEntity`. Those platforms were removed
-> because sending commands requires Tesla's signed vehicle-command protocol.
 
 **Framework Concepts**:
 
@@ -98,8 +94,8 @@ data = await vehicle.get_latest_vehicle_data()
 await vehicle.wake_up()  # does not require command signing
 ```
 
-> **Note (v5.0.0)**: command methods (lock/unlock, climate, charge start/stop,
-> etc.) are no longer used — sending commands requires Tesla's signed
+> **Note**: command methods (lock/unlock, climate, charge start/stop,
+> etc.) are not used — sending commands requires Tesla's signed
 > vehicle-command protocol.
 
 **Why Custom Fork**:
@@ -397,7 +393,7 @@ pytest-httpx = ">=0.24.0"
   "dependencies": ["http"],
   "requirements": ["git+https://github.com/grzesiek1711/teslajsonpy.git@dev"],
   "homeassistant": "2024.11.0",
-  "version": "5.0.0"
+  "version": "1.2.0"
 }
 ```
 
@@ -412,7 +408,7 @@ pytest-httpx = ">=0.24.0"
 **Rate Limits**: Varies by endpoint  
 **Timeout**: Typically 30 seconds
 
-**Endpoints Used** (via teslajsonpy, read-only as of v5.0.0):
+**Endpoints Used** (via teslajsonpy, read-only):
 
 ```
 GET  /api/1/vehicles                    # List vehicles

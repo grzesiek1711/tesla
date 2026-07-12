@@ -14,7 +14,7 @@
 [![Discord][discord-shield]][discord]
 [![Community Forum][forum-shield]][forum]
 
-A fork of the previous official Tesla integration in Home Assistant which has been removed due to Tesla login issues. Do not report issues to Home Assistant.
+A fork of [alandtse/tesla](https://github.com/alandtse/tesla), the previous official Tesla integration in Home Assistant which has been removed due to Tesla login issues. Do not report issues to Home Assistant.
 
 ---
 
@@ -30,19 +30,17 @@ This integration provides read-only Home Assistant monitoring for Tesla vehicles
 - Charging status and energy tracking (charge limit, amps, voltage, power, rate)
 - Software update status
 
-> **Note (v5.0.0): read-only integration.** Sending commands to the vehicle
-> (lock/unlock, climate control, opening the trunk/frunk/windows, charge
-> start/stop, etc.) now requires Tesla's signed vehicle-command protocol and a
-> signing certificate, which this integration does not use. All command
-> entities have been removed and, where the corresponding state is readable,
-> replaced by read-only sensors/binary sensors. The only actions that remain
-> are **wake up** and **force data update** (which do not require signing) and
-> a local **polling** switch.
+> **Read-only integration.** Sending commands to the vehicle (lock/unlock,
+> climate control, opening the trunk/frunk/windows, charge start/stop, etc.)
+> requires Tesla's signed vehicle-command protocol and a signing certificate,
+> which this integration does not use. Where the corresponding state is
+> readable it is exposed as a read-only sensor/binary sensor. The only actions
+> available are **wake up** and **force data update** (which do not require
+> signing) and a local **polling** switch.
 
-> **Note**: This is a vehicles-only fork. Tesla Energy Site (Powerwall/Solar)
-> support was removed in v4.0.0. If you need Powerwall support, use the 3.x
-> release line or the upstream [alandtse/tesla](https://github.com/alandtse/tesla)
-> integration.
+> **Note**: This is a vehicles-only fork (no Tesla Energy Site / Powerwall /
+> solar support). If you need Powerwall support, use the upstream
+> [alandtse/tesla](https://github.com/alandtse/tesla) integration.
 
 ---
 
@@ -102,12 +100,19 @@ To use this integration, you need a Tesla refresh token (from your Tesla account
 
 After adding the integration, open its options dialog:
 
-| Option               | Default | Range                              | Purpose                                  |
-| -------------------- | ------- | ---------------------------------- | ---------------------------------------- |
-| **Polling Interval** | 660 sec | 60-3600                            | How often to check for updates           |
-| **Wake on Start**    | Off     | On/Off                             | Wake sleeping cars when HA starts        |
-| **Polling Policy**   | Always  | Always / Connected Only / Conserve | Sleep optimization strategy              |
-| **TeslaMate MQTT**   | Off     | On/Off                             | Sync data from TeslaMate (requires MQTT) |
+| Option                      | Default | Range                              | Purpose                                                          |
+| --------------------------- | ------- | ---------------------------------- | ---------------------------------------------------------------- |
+| **Polling Interval**        | 660 sec | 10-3600                            | How often to check for updates                                   |
+| **Sentry Polling Interval** | 660 sec | 10-3600                            | Polling interval used while sentry mode is active on any vehicle |
+| **Wake on Start**           | Off     | On/Off                             | Wake sleeping cars when HA starts                                |
+| **Polling Policy**          | Always  | Always / Connected Only / Conserve | Sleep optimization strategy                                      |
+| **TeslaMate MQTT**          | Off     | On/Off                             | Sync data from TeslaMate (requires MQTT)                         |
+
+> **Sentry polling interval.** When sentry mode is active on any vehicle the
+> integration switches to this interval instead of the normal polling interval,
+> so you can poll more frequently (or less) while the car is guarding itself.
+> Leave it equal to the normal polling interval for unchanged behavior. Note
+> that more frequent polling keeps the car awake and increases battery drain.
 
 > **TeslaMate MQTT sync (near real-time).** TeslaMate talks to Tesla over a
 > streaming/websocket connection and publishes vehicle data to MQTT far more
@@ -174,22 +179,13 @@ force data update buttons and the local polling switch.
 
 - Software update status (read-only; installing requires a signing certificate)
 
-**Text**:
+**Number**:
 
-- TeslaMate ID (for syncing)
+- TeslaMate ID (numeric car id used for TeslaMate MQTT syncing)
 
-> **Removed in v5.0.0**: climate control, covers (frunk/trunk/windows/sunroof/
-> charge port), locks, selects (seat/steering heaters, cabin overheat
-> protection), numbers (charge limit/amps), the command switches (charger,
-> sentry, valet, heated steering wheel) and the command buttons (horn, flash
-> lights, HomeLink, remote start, boombox). These required Tesla's signed
-> vehicle-command protocol. Where the state is readable it is now exposed as a
-> sensor or binary sensor above.
-
-> **Note (v5.1.0)**: all diagnostic sensors and binary sensors (per-seat heater
-> levels, passenger temperature setting, battery heater and front/rear
-> defroster) are now enabled by default, so every sensor is visible right after
-> installation.
+> **Note**: all diagnostic sensors and binary sensors (per-seat heater levels,
+> passenger temperature setting, battery heater and front/rear defroster) are
+> enabled by default, so every sensor is visible right after installation.
 
 ---
 

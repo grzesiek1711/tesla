@@ -104,7 +104,7 @@ graph TB
     TCE --> S3["Switch (polling)"]
     TCE --> S4["Buttons"]
     TCE --> S5["Device Tracker"]
-    TCE --> S6["Update / Text"]
+    TCE --> S6["Update / Number"]
 ```
 
 **Entity Lifecycle**:
@@ -115,7 +115,7 @@ graph TB
 4. Update their state in Home Assistant state machine
 5. Removed during `async_unload_entry()`
 
-**Platform Modules** (one per entity domain, all read-only as of v5.0.0):
+**Platform Modules** (one per entity domain, all read-only):
 
 - `sensor.py` - Numeric and text state values (28 classes)
 - `binary_sensor.py` - On/off state indicators (23 classes)
@@ -123,13 +123,11 @@ graph TB
 - `button.py` - Wake up and force data update (2 classes)
 - `device_tracker.py` - Location tracking (2 classes)
 - `update.py` - Software version tracking (read-only)
-- `text.py` - Text configuration (TeslaMate ID)
+- `number.py` - TeslaMate ID (numeric car id for TeslaMate MQTT syncing)
 
-> **Removed in v5.0.0**: `climate.py`, `cover.py`, `lock.py`, `select.py` and
-> `number.py`, plus the command switches and buttons. Sending commands to the
-> vehicle now requires Tesla's signed vehicle-command protocol, which this
-> integration does not use. Where the corresponding state is readable it is now
-> exposed via sensors/binary sensors.
+Sending commands to the vehicle requires Tesla's signed vehicle-command
+protocol, which this integration does not use. Where the corresponding state is
+readable it is exposed via sensors/binary sensors.
 
 Each platform implements `async_setup_entry()` to create and register its entities.
 
@@ -228,8 +226,9 @@ sequenceDiagram
 
 ### Read-Only Actions
 
-As of v5.0.0 the integration does not send commands to the vehicle. The only
-actions available do not require Tesla's signed vehicle-command protocol:
+As of the current release the integration does not send commands to the
+vehicle. The only actions available do not require Tesla's signed
+vehicle-command protocol:
 
 ```
 1. User presses "Wake Up" or "Force Data Update" button (or toggles polling)
@@ -239,7 +238,7 @@ actions available do not require Tesla's signed vehicle-command protocol:
 ```
 
 > Commands such as lock/unlock, climate control, opening the trunk/frunk/
-> windows and charge start/stop were removed in v5.0.0 because they require a
+> windows and charge start/stop are not available because they require a
 > signing certificate this integration does not use.
 
 ## Key Design Patterns
