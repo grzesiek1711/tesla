@@ -246,7 +246,7 @@ prospector                # Full linting
 - OAuth 2.0 token-based authentication
 - REST API for reading vehicle state (read-only; commands require signing)
 - Polling interval configurable (default: 660 seconds)
-- Sentry polling interval (`sentry_scan_interval`, default: 660 seconds, min 10) used while sentry mode is active on any vehicle
+- Sentry polling interval (`sentry_scan_interval`, default: 660 seconds, min 5) used while sentry mode is active on any vehicle
 
 ### MQTT Integration (via TeslaMate)
 

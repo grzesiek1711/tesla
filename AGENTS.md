@@ -178,12 +178,12 @@ with `force=True` so the effective refresh cadence matches the configured
 interval (previously a 10s setting drifted to roughly 20s). When sentry mode is
 no longer active it restores the normal heartbeat and clears **only** an
 override it set itself, preserving any manual `set_update_interval` service
-call. The effective minimum interval is 10 seconds.
+call. The effective minimum interval is 5 seconds.
 
 ### Events
 
-The integration fires `tesla_extended_sentry_display` (const
-`EVENT_SENTRY_DISPLAY`) on the Home Assistant event bus. It is **edge-triggered**
+The integration fires `tesla_sentry_triggered` (const
+`EVENT_SENTRY_TRIGGERED`) on the Home Assistant event bus. It is **edge-triggered**
 (fired once when the condition becomes true and re-armed after it clears) when a
 vehicle has sentry mode enabled and `center_display_state` equals
 `SENTRY_ALERT_DISPLAY_STATE = 7`. Event data: `name` (display name). The
@@ -391,7 +391,7 @@ The project includes a Docker dev container (`.devcontainer/`):
 ### User Options
 
 - **polling_interval**: Seconds between updates (60-3600, default 660)
-- **sentry_scan_interval**: Polling interval (seconds, min 10, default 660) used while sentry mode is active on any vehicle
+- **sentry_scan_interval**: Polling interval (seconds, min 5, default 660) used while sentry mode is active on any vehicle
 - **wake_on_start**: Wake cars when HA starts (default: false)
 - **polling_policy**: Sleep optimization strategy (default: always)
 - **teslamate_enabled**: Enable MQTT sync (default: false)
@@ -473,7 +473,7 @@ The project includes a Docker dev container (`.devcontainer/`):
 | Property           | Value         |
 | ------------------ | ------------- |
 | **Domain**         | tesla_extended  |
-| **Version**        | 1.4.0         |
+| **Version**        | 1.5.0         |
 | **Min HA Version** | 2024.11.0     |
 | **License**        | Apache-2.0    |
 | **Maintainer**     | @alandtse     |

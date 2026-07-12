@@ -43,7 +43,7 @@ from .const import (
     DEFAULT_SENTRY_SCAN_INTERVAL,
     DEFAULT_WAKE_ON_START,
     DOMAIN,
-    EVENT_SENTRY_DISPLAY,
+    EVENT_SENTRY_TRIGGERED,
     MIN_SCAN_INTERVAL,
     PLATFORMS,
     SENTRY_ALERT_DISPLAY_STATE,
@@ -455,9 +455,9 @@ class TeslaDataUpdateCoordinator(DataUpdateCoordinator):
         if not self.vin:
             return False
 
-        options = getattr(self.config_entry, "options", None)
-        if not isinstance(options, dict):
-            options = {}
+        # config_entry.options is a MappingProxyType (not a dict), so accept any
+        # mapping here rather than checking for dict specifically.
+        options = getattr(self.config_entry, "options", None) or {}
         normal_interval = int(options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL))
         sentry_interval = int(
             options.get(CONF_SENTRY_SCAN_INTERVAL, DEFAULT_SENTRY_SCAN_INTERVAL)
@@ -525,11 +525,11 @@ class TeslaDataUpdateCoordinator(DataUpdateCoordinator):
             _LOGGER.debug(
                 "%s: firing %s (center_display_state=%s)",
                 self.vin[-5:] if self.vin else "?",
-                EVENT_SENTRY_DISPLAY,
+                EVENT_SENTRY_TRIGGERED,
                 display_state,
             )
             self.hass.bus.async_fire(
-                EVENT_SENTRY_DISPLAY,
+                EVENT_SENTRY_TRIGGERED,
                 {"name": car.display_name},
             )
         self._sentry_display_event_active = condition

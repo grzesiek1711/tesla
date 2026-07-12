@@ -102,8 +102,8 @@ After adding the integration, open its options dialog:
 
 | Option                      | Default | Range                              | Purpose                                                          |
 | --------------------------- | ------- | ---------------------------------- | ---------------------------------------------------------------- |
-| **Polling Interval**        | 660 sec | 10-3600                            | How often to check for updates                                   |
-| **Sentry Polling Interval** | 660 sec | 10-3600                            | Polling interval used while sentry mode is active on any vehicle |
+| **Polling Interval**        | 660 sec | 5-3600                             | How often to check for updates                                   |
+| **Sentry Polling Interval** | 660 sec | 5-3600                             | Polling interval used while sentry mode is active on any vehicle |
 | **Wake on Start**           | Off     | On/Off                             | Wake sleeping cars when HA starts                                |
 | **Polling Policy**          | Always  | Always / Connected Only / Conserve | Sleep optimization strategy                                      |
 | **TeslaMate MQTT**          | Off     | On/Off                             | Sync data from TeslaMate (requires MQTT)                         |
@@ -113,7 +113,7 @@ After adding the integration, open its options dialog:
 > interval, so you can refresh more frequently (or less) while the car is
 > guarding itself. It is applied per vehicle and the "polling interval" sensor
 > reflects the value currently in effect. Leave it equal to the normal polling
-> interval for unchanged behavior. The minimum is 10 seconds; note that more
+> interval for unchanged behavior. The minimum is 5 seconds; note that more
 > frequent polling keeps the car awake and increases battery drain.
 
 > **TeslaMate MQTT sync (near real-time).** TeslaMate talks to Tesla over a
@@ -198,7 +198,7 @@ trigger:
 
 | Event                            | Fired when                                                                                             |
 | -------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| `tesla_extended_sentry_display`  | A vehicle has **sentry mode enabled** and its **center display** changes to state `7` (the alert view) |
+| `tesla_sentry_triggered`  | A vehicle has **sentry mode enabled** and its **center display** changes to state `7` (the alert view) |
 
 The event is edge-triggered (fired once when the condition becomes true and
 re-armed after it clears) and carries this data:
@@ -217,7 +217,7 @@ automation:
   - alias: "Tesla - Sentry display alert"
     trigger:
       platform: event
-      event_type: tesla_extended_sentry_display
+      event_type: tesla_sentry_triggered
     action:
       - service: notify.mobile_app
         data:

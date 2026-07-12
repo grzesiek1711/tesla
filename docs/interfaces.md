@@ -557,7 +557,7 @@ data:
 
 ### Fired Events
 
-#### `tesla_extended_sentry_display`
+#### `tesla_sentry_triggered`
 
 **Fired when** (edge-triggered): a vehicle has **sentry mode enabled** and its
 `center_display_state` changes to `7`. The event fires once when the condition
@@ -580,7 +580,7 @@ automation:
   - alias: "Tesla - Sentry display alert"
     trigger:
       platform: event
-      event_type: tesla_extended_sentry_display
+      event_type: tesla_sentry_triggered
     action:
       - service: notify.mobile_app
         data:

@@ -397,7 +397,7 @@ class TeslaLocationClass(TeslaCarEntity, TrackerEntity):
 **Options**:
 
 - `polling_interval` - Seconds between updates (default: 660)
-- `sentry_scan_interval` - Polling interval (seconds, min 10, default 660) used while sentry mode is active on any vehicle
+- `sentry_scan_interval` - Polling interval (seconds, min 5, default 660) used while sentry mode is active on any vehicle
 - `wake_on_start` - Wake sleeping cars on HA startup
 - `polling_policy` - When to allow cars to sleep
 - `teslamate_enabled` - Enable TeslaMate sync

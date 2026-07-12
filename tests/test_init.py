@@ -20,7 +20,7 @@ from custom_components.tesla_extended.base import device_identifier
 from custom_components.tesla_extended.const import (
     CONF_SENTRY_SCAN_INTERVAL,
     DOMAIN,
-    EVENT_SENTRY_DISPLAY,
+    EVENT_SENTRY_TRIGGERED,
     MIN_SCAN_INTERVAL,
 )
 
@@ -336,7 +336,7 @@ async def test_sentry_display_event_fires_once_and_rearms(
     car = _sentry_car(sentry=True, display=7)
     controller = _interval_controller()
     coordinator = _make_coordinator(hass, car, controller, {})
-    events = async_capture_events(hass, EVENT_SENTRY_DISPLAY)
+    events = async_capture_events(hass, EVENT_SENTRY_TRIGGERED)
 
     coordinator._fire_sentry_display_event()
     await hass.async_block_till_done()
@@ -374,12 +374,42 @@ async def test_sentry_interval_active_without_sentry_available(
     assert controller.get_update_interval_vin(vin=car.vin) == 10
 
 
+async def test_sentry_interval_reads_mapping_proxy_options(
+    hass: HomeAssistant,
+) -> None:
+    """config_entry.options is a MappingProxyType at runtime, not a dict.
+
+    Regression test: the interval logic must read the real options mapping
+    rather than falling back to defaults (which would make sentry==normal and
+    never activate the sentry interval).
+    """
+    from types import MappingProxyType
+
+    car = _sentry_car(sentry=True, display=0, available=False)
+    controller = _interval_controller()
+    entry = _config_entry()
+    entry.options = MappingProxyType(
+        {CONF_SCAN_INTERVAL: 660, CONF_SENTRY_SCAN_INTERVAL: 10}
+    )
+    hass.data.setdefault(DOMAIN, {})[entry.entry_id] = {"cars": {car.vin: car}}
+    coordinator = TeslaDataUpdateCoordinator(
+        hass,
+        config_entry=entry,
+        controller=controller,
+        reload_lock=asyncio.Lock(),
+        vin=car.vin,
+    )
+
+    assert coordinator._async_apply_scan_interval() is True
+    assert controller.get_update_interval_vin(vin=car.vin) == 10
+
+
 async def test_sentry_display_event_requires_sentry_on(hass: HomeAssistant) -> None:
     """The event does not fire when the display is 7 but sentry mode is off."""
     car = _sentry_car(sentry=False, display=7)
     controller = _interval_controller()
     coordinator = _make_coordinator(hass, car, controller, {})
-    events = async_capture_events(hass, EVENT_SENTRY_DISPLAY)
+    events = async_capture_events(hass, EVENT_SENTRY_TRIGGERED)
 
     coordinator._fire_sentry_display_event()
     await hass.async_block_till_done()

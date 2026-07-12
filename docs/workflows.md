@@ -163,7 +163,7 @@ graph TD
 1. Show form with options fields
 2. User configures:
    - `polling_interval`: 60-3600 seconds
-   - `sentry_scan_interval`: 10-3600 seconds, polling interval used while sentry mode is active on any vehicle
+   - `sentry_scan_interval`: 5-3600 seconds, polling interval used while sentry mode is active on any vehicle
    - `wake_on_start`: Wake vehicles on HA startup
    - `polling_policy`: Sleep/polling strategy
    - `teslamate_enabled`: Enable MQTT sync
@@ -272,12 +272,12 @@ to the configured `sentry_scan_interval` instead of the normal
    **only** an override the coordinator itself applied, preserving any manual
    `set_update_interval` service call.
 
-The effective minimum interval is 10 seconds.
+The effective minimum interval is 5 seconds.
 
 ### Sentry Display Event
 
 On every car-state change the coordinator evaluates each vehicle and fires the
-`tesla_extended_sentry_display` event on the Home Assistant event bus when
+`tesla_sentry_triggered` event on the Home Assistant event bus when
 sentry mode is enabled and `center_display_state == 7`. The event is
 edge-triggered (fired once when the condition becomes true and re-armed after it
 clears) and carries the vehicle `name` (display name). Because it is evaluated

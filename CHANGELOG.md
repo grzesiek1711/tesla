@@ -2,6 +2,25 @@
 
 
 
+## v1.5.0 (2026-07-12)
+
+### Fix
+
+* fix(polling): actually apply the sentry polling interval. `config_entry.options`
+  is a `MappingProxyType`, not a `dict`, so the previous `isinstance(..., dict)`
+  guard discarded the real options and treated the sentry interval as equal to
+  the normal one — the interval never activated and the "polling interval"
+  sensor stayed at the normal value. The options mapping is now read correctly.
+
+### Change
+
+* change(config): lower the minimum polling interval from 10 to 5 seconds for
+  both the normal and sentry polling intervals.
+
+* change(events): rename the sentry event from `tesla_extended_sentry_display`
+  to `tesla_sentry_triggered`. Update automations that used the old name.
+
+
 ## v1.4.0 (2026-07-12)
 
 ### Fix
