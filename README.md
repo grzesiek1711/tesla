@@ -97,20 +97,6 @@ After adding the integration, open its options dialog:
 
 ---
 
-## Tesla Fleet API Proxy
-
-**Most recent Tesla vehicles require additional setup.**
-
-If you see `teslajsonpy.exceptions.TeslaException` errors in logs when sending commands:
-
-1. Install [Tesla HTTP Proxy addon](https://github.com/llamafilm/tesla-http-proxy-addon)
-2. Configure proxy URL in integration options
-3. Full setup guide: [Proxy setup with DuckDNS and NGinx](https://github.com/alandtse/tesla/wiki/Proxy-setup-with-DuckDNS-and-NGinx)
-
-Sensors work without proxy; only commands (lock, climate, etc.) require it.
-
----
-
 ## Available Entities
 
 ### Vehicle Entities
@@ -220,11 +206,6 @@ automation:
 ---
 
 ## Tips & Troubleshooting
-
-### "Command failed" Error
-
-- **Cause**: Fleet API required, proxy not set up
-- **Fix**: Install Tesla HTTP Proxy addon and configure in integration options
 
 ### Data not updating
 

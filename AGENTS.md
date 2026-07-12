@@ -347,12 +347,6 @@ The project includes a Docker dev container (`.devcontainer/`):
 - Configurable polling policies: always, connected_only, conserve
 - Optional TeslaMate MQTT sync for real-time updates
 
-### Fleet API Proxy Support
-
-- Some newer Tesla vehicles require Fleet API proxy
-- Integration auto-detects and supports Tesla HTTP Proxy addon
-- Configuration via integration options
-
 ### Vehicle Sleep Logic
 
 - Coordinator tracks vehicle online/asleep state
@@ -393,7 +387,6 @@ The project includes a Docker dev container (`.devcontainer/`):
 1. **Custom Fork**: Uses `teslajsonpy` fork instead of official package
 2. **Vehicle Sleep Logic**: Special handling to minimize battery drain (not typical)
 3. **Optional MQTT Integration**: Can sync from TeslaMate MQTT topics
-4. **Fleet API Proxy**: Support for Tesla HTTP Proxy addon (newer vehicles)
 
 ---
 

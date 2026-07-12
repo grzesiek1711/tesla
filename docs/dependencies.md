@@ -421,12 +421,6 @@ GET  /api/1/vehicles/{id}/data          # Get vehicle state
 POST /api/1/vehicles/{id}/command/...   # Execute commands
 ```
 
-### Tesla Fleet API (Optional)
-
-**Used When**: Some newer vehicles require Fleet API with proxy  
-**Requires**: Tesla HTTP Proxy addon (separate setup)  
-**Configuration**: Set proxy URL in integration options
-
 ---
 
 ## 6. Optional Integrations

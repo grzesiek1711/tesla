@@ -2,13 +2,10 @@
 
 from http import HTTPStatus
 import logging
-import os
-import ssl
 
 from homeassistant import config_entries, core, exceptions
 from homeassistant.const import (
     CONF_ACCESS_TOKEN,
-    CONF_CLIENT_ID,
     CONF_DOMAIN,
     CONF_SCAN_INTERVAL,
     CONF_TOKEN,
@@ -27,9 +24,6 @@ from .const import (
     ATTR_POLLING_POLICY_ALWAYS,
     ATTR_POLLING_POLICY_CONNECTED,
     ATTR_POLLING_POLICY_NORMAL,
-    CONF_API_PROXY_CERT,
-    CONF_API_PROXY_ENABLE,
-    CONF_API_PROXY_URL,
     CONF_ENABLE_TESLAMATE,
     CONF_EXPIRATION,
     CONF_INCLUDE_VEHICLES,
@@ -56,7 +50,6 @@ class TeslaConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         """Initialize the tesla flow."""
         self.username = None
         self.reauth = False
-        self.use_proxy = False
 
     async def async_step_import(self, import_config):
         """Import a config entry from configuration.yaml."""
@@ -64,27 +57,6 @@ class TeslaConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def async_step_user(self, user_input=None):
         """Handle the start of the config flow."""
-        data_schema = vol.Schema(
-            {
-                vol.Required(CONF_API_PROXY_ENABLE, default=False): bool,
-            }
-        )
-
-        if user_input is None:
-            return self.async_show_form(
-                step_id="user",
-                data_schema=data_schema,
-            )
-
-        # in case we import a config entry from configuration.yaml
-        if CONF_API_PROXY_CERT in user_input:
-            return await self.async_step_credentials(user_input)
-
-        self.use_proxy = user_input.get(CONF_API_PROXY_ENABLE, False)
-        return await self.async_step_credentials()
-
-    async def async_step_credentials(self, user_input=None):
-        """Handle the second step of the config flow."""
         errors = {}
 
         if user_input is not None:
@@ -114,8 +86,8 @@ class TeslaConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 )
 
         return self.async_show_form(
-            step_id="credentials",
-            data_schema=self._async_schema(api_proxy_enable=self.use_proxy),
+            step_id="user",
+            data_schema=self._async_schema(),
             errors=errors,
             description_placeholders={},
         )
@@ -133,10 +105,9 @@ class TeslaConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         return OptionsFlowHandler()
 
     @callback
-    def _async_schema(self, api_proxy_enable: bool):
+    def _async_schema(self):
         """Fetch schema with defaults."""
-
-        schema = vol.Schema(
+        return vol.Schema(
             {
                 vol.Required(CONF_USERNAME, default=self.username): str,
                 vol.Required(CONF_TOKEN): str,
@@ -144,47 +115,6 @@ class TeslaConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 vol.Required(CONF_INCLUDE_VEHICLES, default=True): bool,
             }
         )
-
-        api_proxy_cert = api_proxy_url = client_id = None
-        if api_proxy_enable:
-            # autofill fields if HTTP Proxy is running as addon
-            if "SUPERVISOR_TOKEN" in os.environ:
-                _LOGGER.debug("Running in supervised environment")
-                # find out if addon is running from normal repo or local
-                req = httpx.get(
-                    "http://supervisor/addons",
-                    headers={
-                        "Authorization": f"Bearer {os.environ['SUPERVISOR_TOKEN']}"
-                    },
-                )
-                for addon in req.json()["data"]["addons"]:
-                    if addon["name"] == "Tesla HTTP Proxy":
-                        addon_slug = addon["slug"]
-                        break
-
-                try:
-                    # read Client ID from addon
-                    req = httpx.get(
-                        f"http://supervisor/addons/{addon_slug}/info",
-                        headers={
-                            "Authorization": f"Bearer {os.environ['SUPERVISOR_TOKEN']}"
-                        },
-                    )
-                    client_id = req.json()["data"]["options"]["client_id"]
-                    api_proxy_url = "https://" + req.json()["data"]["hostname"]
-                    api_proxy_cert = "/share/tesla/selfsigned.pem"
-                    _LOGGER.debug("Found addon: %s", addon_slug)
-                except NameError:
-                    _LOGGER.warning("Unable to communicate with Tesla HTTP Proxy addon")
-
-            schema = schema.extend(
-                {
-                    vol.Required(CONF_API_PROXY_URL, default=api_proxy_url): str,
-                    vol.Required(CONF_API_PROXY_CERT, default=api_proxy_cert): str,
-                    vol.Required(CONF_CLIENT_ID, default=client_id): str,
-                }
-            )
-        return schema
 
     @callback
     def _async_entry_for_username(self, username):
@@ -249,17 +179,6 @@ async def validate_input(hass: core.HomeAssistant, data) -> dict:
     config = {}
     tesla_ssl_context = create_tesla_ssl_context()
 
-    if api_proxy_cert := data.get(CONF_API_PROXY_CERT):
-        try:
-            await hass.async_add_executor_job(
-                tesla_ssl_context.load_verify_locations, api_proxy_cert
-            )
-        except (FileNotFoundError, ssl.SSLError):
-            _LOGGER.warning(
-                "Unable to load custom SSL certificate from %s",
-                api_proxy_cert,
-            )
-
     async_client = httpx.AsyncClient(
         headers={USER_AGENT: SERVER_SOFTWARE}, timeout=60, verify=tesla_ssl_context
     )
@@ -273,9 +192,6 @@ async def validate_input(hass: core.HomeAssistant, data) -> dict:
             expiration=data.get(CONF_EXPIRATION, 0),
             auth_domain=data.get(CONF_DOMAIN, AUTH_DOMAIN),
             polling_policy=data.get(CONF_POLLING_POLICY, DEFAULT_POLLING_POLICY),
-            api_proxy_cert=data.get(CONF_API_PROXY_CERT),
-            api_proxy_url=data.get(CONF_API_PROXY_URL),
-            client_id=data.get(CONF_CLIENT_ID),
         )
         result = await controller.connect(test_login=True)
         config[CONF_TOKEN] = result["refresh_token"]
@@ -284,9 +200,6 @@ async def validate_input(hass: core.HomeAssistant, data) -> dict:
         config[CONF_USERNAME] = data[CONF_USERNAME]
         config[CONF_DOMAIN] = data.get(CONF_DOMAIN, AUTH_DOMAIN)
         config[CONF_INCLUDE_VEHICLES] = data[CONF_INCLUDE_VEHICLES]
-        config[CONF_API_PROXY_URL] = data.get(CONF_API_PROXY_URL)
-        config[CONF_API_PROXY_CERT] = data.get(CONF_API_PROXY_CERT)
-        config[CONF_CLIENT_ID] = data.get(CONF_CLIENT_ID, "ownerapi")
 
     except IncompleteCredentials as ex:
         _LOGGER.error("Authentication error: %s %s", ex.message, ex)

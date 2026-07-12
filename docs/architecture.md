@@ -373,7 +373,6 @@ The integration runs within Home Assistant process:
 - Entities created and managed by Home Assistant
 - Polling runs as background task
 - No external services or sidecars required
-- Optional external: Tesla HTTP Proxy for Fleet API compatibility
 
 ---
 

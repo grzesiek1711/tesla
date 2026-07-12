@@ -249,7 +249,6 @@ prospector                # Full linting
 - OAuth 2.0 token-based authentication
 - REST API for vehicle commands and state
 - Polling interval configurable (default: 660 seconds)
-- Supports optional Tesla HTTP Proxy for Fleet API compatibility
 
 ### MQTT Integration (via TeslaMate)
 
