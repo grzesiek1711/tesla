@@ -7,14 +7,11 @@ graph TB
     Coordinator["TeslaDataUpdateCoordinator<br/>State Container"]
 
     Vehicles["Vehicle State<br/>Charge, Climate, Location, etc"]
-    Sites["Energy Site State<br/>Battery, Power, Grid"]
 
     Coordinator --> Vehicles
-    Coordinator --> Sites
 
     Entities["Entities<br/>Read from coordinator data"]
     Entities --> Vehicles
-    Entities --> Sites
 ```
 
 ---
@@ -28,7 +25,6 @@ graph TB
 ```python
 coordinator.data: Dict[str, Any] = {
     "vehicles": List[Dict],     # All associated vehicles
-    "energy_sites": List[Dict], # All Powerwall installations
     "last_update": datetime,    # Timestamp of last successful update
 }
 ```
@@ -41,17 +37,6 @@ coordinator.data: Dict[str, Any] = {
     "vin": str,                 # Vehicle Identification Number
     "state": str,               # "online", "asleep", "offline", etc
     "response": Dict[str, Any], # Latest Tesla API response (vehicle_data)
-    "updated_at": datetime,     # When this entry was last updated
-}
-```
-
-### Energy Sites List Entry
-
-```python
-{
-    "id": int,                  # Tesla energy site ID
-    "name": str,                # Site name
-    "response": Dict[str, Any], # Latest Tesla API response (site_data)
     "updated_at": datetime,     # When this entry was last updated
 }
 ```
@@ -256,107 +241,7 @@ vehicle_response = {
 
 ---
 
-## 3. Energy Site State Schema
-
-**Source**: Tesla API `battery_list` and `site_data` endpoints  
-**Accessed via**: `site["response"]`
-
-### Complete Energy Site Schema
-
-```python
-site_response = {
-    # === IDENTITY ===
-    "id": int,                          # Site ID
-    "site_name": str,                   # User-set site name
-    "timezone": str,                    # e.g., "America/Los_Angeles"
-
-    # === BATTERY/POWERWALL ===
-    "battery_list": [
-        {
-            "id": int,                  # Battery ID
-            "energy_left": float,       # Wh
-            "energy_ref": float,        # Wh
-            "energy_max": float,        # Wh
-            "energy_reserve_ref": float,# Wh
-            "energy_reserve_used": float,# Wh
-            "energy_storage_mode": str, # "self_consumption", "backup", "autonomous"
-            "installed": bool,
-            "nameplate_energy": float,  # Wh
-            "nameplate_power": float,   # W
-            # ... more fields
-        }
-    ],
-
-    # === BACKUP STATE ===
-    "backup": {
-        "backup_reserve_percent": float,  # 0-100
-        "events": [...],
-    },
-
-    # === COMPONENTS ===
-    "components": {
-        "battery": {
-            "energy": float,            # Wh
-            "power": float,             # W (positive=charging, negative=discharging)
-        },
-        "solar": {
-            "energy": float,            # Wh
-            "power": float,             # W
-        },
-        "grid": {
-            "energy": float,            # Wh
-            "power": float,             # W (positive=importing, negative=exporting)
-        },
-        "load": {
-            "energy": float,            # Wh
-            "power": float,             # W (home consumption)
-        },
-    },
-
-    # === SITE STATUS ===
-    "site_status": {
-        "running": bool,
-    },
-
-    # === ENERGY EXPORT & OPERATION ===
-    "energy_site_id": str,
-
-    # Configuration
-    "components_battery": bool,
-    "components_solar": bool,
-    "components_load": bool,
-    "components_grid": bool,
-
-    # Current operation
-    "export_rule": str,                 # "pv_only", "battery_ok", "pv_and_battery"
-    "grid_charging_enabled": bool,
-    "operation_mode": str,              # "self_consumption", "backup", "autonomous"
-}
-```
-
-### Energy Site Common Values
-
-#### Operation Modes
-
-```python
-"operation_mode": "self_consumption" | "backup" | "autonomous"
-```
-
-#### Export Rules
-
-```python
-"export_rule": "pv_only" | "battery_ok" | "pv_and_battery"
-```
-
-#### Energy Storage Modes
-
-```python
-"energy_storage_mode": "self_consumption" | "backup" | "autonomous"
-```
-
----
-
-## 4. Configuration Data Model
+## 3. Configuration Data Model
 
 **File**: Home Assistant config entry storage
 
@@ -389,7 +274,7 @@ config_entry.options = {
 
 ---
 
-## 5. Entity Attribute Models
+## 4. Entity Attribute Models
 
 ### Sensor Entity Attributes
 
@@ -485,7 +370,7 @@ lock_entity = {
 
 ---
 
-## 6. Type Definitions & Validation
+## 5. Type Definitions & Validation
 
 ### Python Type Hints
 
@@ -498,16 +383,12 @@ VehicleData = Dict[str, Any]
 VehicleResponse = Dict[str, Any]
 VehicleState = Dict[str, Any]
 
-# Energy site data
-EnergySiteData = Dict[str, Any]
-EnergySiteResponse = Dict[str, Any]
-
 # Configuration
 ConfigData = Dict[str, str]
 ConfigOptions = Dict[str, Any]
 
 # Coordinator data
-CoordinatorData = Dict[str, Union[List[VehicleData], List[EnergySiteData], datetime]]
+CoordinatorData = Dict[str, Union[List[VehicleData], datetime]]
 
 # Entity data
 EntityData = Dict[str, Any]
@@ -540,7 +421,7 @@ OPTIONS_SCHEMA = vol.Schema({
 
 ---
 
-## 7. Data Transformation & Mapping
+## 6. Data Transformation & Mapping
 
 ### State Transformations
 
@@ -577,14 +458,14 @@ mqtt_topic_to_field = {
 
 ---
 
-## 8. Data Lifecycle
+## 7. Data Lifecycle
 
 ### Update Cycle
 
 ```
 1. Coordinator polling timer fires (every polling_interval seconds)
 2. _async_update_data() called
-3. API requests fetch vehicle and site responses
+3. API requests fetch vehicle responses
 4. Responses cached in coordinator.data
 5. async_update_listeners_debounced() called
 6. Entities' _handle_coordinator_update() called
@@ -608,7 +489,7 @@ mqtt_topic_to_field = {
 
 ---
 
-## 9. Common Data Access Patterns
+## 8. Common Data Access Patterns
 
 ### Accessing Vehicle Data from Entity
 
@@ -618,16 +499,6 @@ battery_level = self.vehicle["response"]["charge_state"]["battery_level"]
 is_charging = self.vehicle["response"]["charge_state"]["charging_state"] == "Charging"
 temp = self.vehicle["response"]["climate_state"]["inside_temp"]
 latitude = self.vehicle["response"]["drive_state"]["latitude"]
-```
-
-### Accessing Energy Site Data from Entity
-
-```python
-# In TeslaEnergyEntity subclass
-battery_energy = self.site["response"]["components"]["battery"]["energy"]
-solar_power = self.site["response"]["components"]["solar"]["power"]
-grid_power = self.site["response"]["components"]["grid"]["power"]
-backup_reserve = self.site["response"]["backup"]["backup_reserve_percent"]
 ```
 
 ### Null Safety

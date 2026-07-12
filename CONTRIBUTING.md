@@ -141,7 +141,7 @@ Tests follow Home Assistant testing patterns:
 **Test Structure**:
 
 - One test file per entity type (test_sensor.py, test_switch.py, etc.)
-- Mock data in `tests/mock_data/` (car.py, energysite.py)
+- Mock data in `tests/mock_data/` (car.py)
 - Utilities in `tests/common.py` for setup helpers
 
 **Example Test**:
@@ -309,17 +309,17 @@ Environment:
 **Example**:
 
 ```
-Title: Add support for Powerwall backup reserve threshold
+Title: Add support for setting the cabin overheat protection temperature
 
 Description:
-Currently I can see the backup reserve percentage, but can't set it
-programmatically or in automations. Would be great to have a service
-to adjust the reserve threshold.
+Currently I can toggle cabin overheat protection, but can't set the
+temperature threshold programmatically or in automations. Would be great
+to have a service to adjust the protection temperature.
 
-Use case: Automation to increase backup reserve during high wildfire
-season, reduce during winter.
+Use case: Automation to lower the threshold on hot summer days and raise
+it in cooler weather to save battery.
 
-Proposed: Add `tesla_custom.set_backup_reserve` service similar to
+Proposed: Add `tesla_custom.set_cop_temp` service similar to
 existing `set_update_interval`.
 ```
 

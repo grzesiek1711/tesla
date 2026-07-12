@@ -7,9 +7,8 @@ from homeassistant.components.binary_sensor import (
     BinarySensorEntity,
 )
 from homeassistant.core import HomeAssistant
-from teslajsonpy.const import GRID_ACTIVE, RESOURCE_TYPE_BATTERY
 
-from .base import TeslaCarEntity, TeslaEnergyEntity
+from .base import TeslaCarEntity
 from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
@@ -20,7 +19,6 @@ async def async_setup_entry(hass: HomeAssistant, config_entry, async_add_entitie
     entry_data = hass.data[DOMAIN][config_entry.entry_id]
     coordinators = entry_data["coordinators"]
     cars = entry_data["cars"]
-    energysites = entry_data["energysites"]
     entities = []
 
     for vin, car in cars.items():
@@ -35,12 +33,6 @@ async def async_setup_entry(hass: HomeAssistant, config_entry, async_add_entitie
         entities.append(TeslaCarScheduledCharging(car, coordinator))
         entities.append(TeslaCarScheduledDeparture(car, coordinator))
         entities.append(TeslaCarUserPresent(car, coordinator))
-
-    for energy_site_id, energysite in energysites.items():
-        coordinator = coordinators[energy_site_id]
-        if energysite.resource_type == RESOURCE_TYPE_BATTERY:
-            entities.append(TeslaEnergyBatteryCharging(energysite, coordinator))
-            entities.append(TeslaEnergyGridStatus(energysite, coordinator))
 
     async_add_entities(entities, update_before_add=True)
 
@@ -129,31 +121,6 @@ class TeslaCarAsleep(TeslaCarEntity, BinarySensorEntity):
     def is_on(self):
         """Return True if car is asleep."""
         return self._car.state == "asleep"
-
-
-class TeslaEnergyBatteryCharging(TeslaEnergyEntity, BinarySensorEntity):
-    """Representation of a Tesla energy charging binary sensor."""
-
-    _attr_device_class = BinarySensorDeviceClass.BATTERY_CHARGING
-    _attr_icon = "mdi:battery-charging"
-    type = "battery charging"
-
-    @property
-    def is_on(self) -> bool:
-        """Return True if battery charging."""
-        return self._energysite.battery_power < -100
-
-
-class TeslaEnergyGridStatus(TeslaEnergyEntity, BinarySensorEntity):
-    """Representation of the Tesla energy grid status binary sensor."""
-
-    type = "grid status"
-    _attr_device_class = BinarySensorDeviceClass.POWER
-
-    @property
-    def is_on(self) -> bool:
-        """Return True if grid status is active."""
-        return self._energysite.grid_status == GRID_ACTIVE
 
 
 class TeslaCarDoors(TeslaCarEntity, BinarySensorEntity):

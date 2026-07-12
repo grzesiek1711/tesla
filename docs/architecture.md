@@ -41,7 +41,7 @@ sequenceDiagram
     User->>ConfigFlow: Add Integration
     ConfigFlow->>TeslaAPI: Authenticate (OAuth token)
     ConfigFlow->>Coordinator: Initialize with tokens
-    Coordinator->>TeslaAPI: Fetch vehicles/sites
+    Coordinator->>TeslaAPI: Fetch vehicles
     Coordinator->>Entities: Create entity instances
     Entities->>User: Display in Home Assistant UI
 ```
@@ -59,9 +59,9 @@ sequenceDiagram
 Responsibilities:
 
 - Manage API client lifecycle and authentication tokens
-- Coordinate polling of all registered vehicles and energy sites
+- Coordinate polling of all registered vehicles
 - Handle vehicle wake-up/sleep logic to minimize battery drain
-- Cache vehicle/site state data
+- Cache vehicle state data
 - Distribute updates to all listening entities
 - Implement exponential backoff on API failures
 - Support optional TeslaMate MQTT sync as alternative to polling
@@ -70,11 +70,9 @@ Responsibilities:
 graph LR
     A["Polling Timer<br/>660s default"] --> B["TeslaDataUpdateCoordinator"]
     B --> C["Fetch Vehicle State"]
-    B --> D["Fetch Energy Site State"]
     B --> E["Update Token if Needed"]
 
     C --> F["Cache State"]
-    D --> F
     F --> G["Notify Listeners<br/>All Entities"]
 
     G --> H["Entity Updates<br/>State & Attributes"]
@@ -89,7 +87,7 @@ graph LR
 
 ### 3. Entity Layer
 
-**Base Classes**: `TeslaBaseEntity`, `TeslaCarEntity`, `TeslaEnergyEntity`
+**Base Classes**: `TeslaBaseEntity`, `TeslaCarEntity`
 
 The entity layer implements Home Assistant entity framework patterns for different domains:
 
@@ -98,10 +96,8 @@ graph TB
     TBE["TeslaBaseEntity<br/>Common State & Properties"]
 
     TCE["TeslaCarEntity<br/>Vehicle Data Access"]
-    TEE["TeslaEnergyEntity<br/>Site Data Access"]
 
     TBE --> TCE
-    TBE --> TEE
 
     TCE --> S1["Sensors"]
     TCE --> S2["Switches"]
@@ -109,10 +105,6 @@ graph TB
     TCE --> S4["Covers"]
     TCE --> S5["Locks"]
     TCE --> S6["...Other Car Entities"]
-
-    TEE --> E1["Sensors"]
-    TEE --> E2["Switches"]
-    TEE --> E3["Selects"]
 ```
 
 **Entity Lifecycle**:
@@ -204,7 +196,7 @@ Custom services for Home Assistant automations:
 ```
 1. Timer fires (polling_interval seconds)
 2. TeslaDataUpdateCoordinator._async_update_data() called
-3. Fetch all vehicles and energy sites from Tesla API
+3. Fetch all vehicles from Tesla API
 4. Cache new state in coordinator
 5. Notify all subscribed entities
 6. Entities update their Home Assistant state
@@ -260,7 +252,7 @@ sequenceDiagram
 - Async/await throughout for non-blocking operations
 - State machine integration for persistence
 - Unique IDs for device tracking
-- Device grouping by vehicle/site
+- Device grouping by vehicle
 
 ### 3. Async/Await Pattern
 
@@ -341,7 +333,7 @@ graph TD
 
 ### Device & Entity Registry
 
-- Vehicles and sites as devices
+- Vehicles as devices
 - Entities grouped by device
 - Supports device removal/grouping
 - Unique identifiers for stability
@@ -358,7 +350,7 @@ graph TD
 
 - OAuth 2.0 authentication
 - Tesla API endpoint abstractions
-- Vehicle and site data structures
+- Vehicle data structures
 - Command execution (lock, climate, etc.)
 
 ### asyncio

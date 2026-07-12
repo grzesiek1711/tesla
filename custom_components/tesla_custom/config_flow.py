@@ -32,7 +32,6 @@ from .const import (
     CONF_API_PROXY_URL,
     CONF_ENABLE_TESLAMATE,
     CONF_EXPIRATION,
-    CONF_INCLUDE_ENERGYSITES,
     CONF_INCLUDE_VEHICLES,
     CONF_POLLING_POLICY,
     CONF_WAKE_ON_START,
@@ -143,7 +142,6 @@ class TeslaConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 vol.Required(CONF_TOKEN): str,
                 vol.Required(CONF_DOMAIN, default=AUTH_DOMAIN): str,
                 vol.Required(CONF_INCLUDE_VEHICLES, default=True): bool,
-                vol.Required(CONF_INCLUDE_ENERGYSITES, default=True): bool,
             }
         )
 
@@ -286,7 +284,6 @@ async def validate_input(hass: core.HomeAssistant, data) -> dict:
         config[CONF_USERNAME] = data[CONF_USERNAME]
         config[CONF_DOMAIN] = data.get(CONF_DOMAIN, AUTH_DOMAIN)
         config[CONF_INCLUDE_VEHICLES] = data[CONF_INCLUDE_VEHICLES]
-        config[CONF_INCLUDE_ENERGYSITES] = data[CONF_INCLUDE_ENERGYSITES]
         config[CONF_API_PROXY_URL] = data.get(CONF_API_PROXY_URL)
         config[CONF_API_PROXY_CERT] = data.get(CONF_API_PROXY_CERT)
         config[CONF_CLIENT_ID] = data.get(CONF_CLIENT_ID, "ownerapi")

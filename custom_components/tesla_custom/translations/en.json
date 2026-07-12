@@ -24,7 +24,6 @@
           "username": "Email",
           "token": "Refresh Token",
           "include_vehicles": "Include Vehicles",
-          "include_energysites": "Include Energy Sites",
           "api_proxy_url": "Proxy URL",
           "api_proxy_cert": "Proxy SSL certificate",
           "client_id": "Tesla developer Client ID"

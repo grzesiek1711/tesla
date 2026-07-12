@@ -6,12 +6,12 @@
 graph TB
     TDC["TeslaDataUpdateCoordinator<br/>Data Hub & Polling Engine"]
 
-    BASE["Base Entity Classes<br/>TeslaBaseEntity, TeslaCarEntity, TeslaEnergyEntity"]
+    BASE["Base Entity Classes<br/>TeslaBaseEntity, TeslaCarEntity"]
 
     CONFIG["Config Flow<br/>Authentication & Options"]
     SUPPORT["Support Modules<br/>TeslaMate, Services, Utils"]
 
-    ENTITIES["Entity Platforms<br/>19 entity types across all domains"]
+    ENTITIES["Entity Platforms<br/>12 entity types across all domains"]
 
     TDC --> BASE
     BASE --> ENTITIES
@@ -37,7 +37,7 @@ graph TB
    - Persist tokens to Home Assistant storage
 
 2. **Data Fetching & Caching**
-   - Poll all vehicles and energy sites at configured interval (default: 660 seconds)
+   - Poll all vehicles at configured interval (default: 660 seconds)
    - Cache latest state to avoid redundant API calls
    - Track vehicle sleep state and wake-up status
 
@@ -51,16 +51,15 @@ graph TB
    - Handle token refresh on auth errors
    - Log errors for debugging
 
-5. **Vehicle/Site Discovery**
+5. **Vehicle Discovery**
    - Fetch list of associated vehicles on setup
-   - Fetch list of energy sites (Powerwall)
    - Create Home Assistant devices and entities
 
 ### Key Methods
 
 | Method                               | Purpose                                             |
 | ------------------------------------ | --------------------------------------------------- |
-| `_async_update_data()`               | Fetch latest vehicle and site states from Tesla API |
+| `_async_update_data()`               | Fetch latest vehicle states from Tesla API          |
 | `_async_update_vehicles()`           | Get all vehicles' current state                     |
 | `async_update_listeners_debounced()` | Notify listening entities after debounce            |
 | `async_remove_config_entry_device()` | Handle device removal from registry                 |
@@ -85,18 +84,6 @@ coordinator.data = {
             }
         },
         # ... more vehicles
-    ],
-    "energy_sites": [
-        {
-            "id": "site_id",
-            "response": {  # Latest API response
-                "id": ...,
-                "battery_list": [...],
-                "components": {...},
-                # ... all site properties
-            }
-        },
-        # ... more sites
     ]
 }
 ```
@@ -111,8 +98,7 @@ coordinator.data = {
 
 ```
 TeslaBaseEntity (Common functionality)
-├── TeslaCarEntity (Vehicle-specific)
-└── TeslaEnergyEntity (Energy site-specific)
+└── TeslaCarEntity (Vehicle-specific)
 ```
 
 ### TeslaBaseEntity
@@ -152,25 +138,6 @@ TeslaBaseEntity (Common functionality)
 - `TeslaCarBattery` - Battery level sensor
 - `TeslaCarCharger` - Charger control switch
 
-### TeslaEnergyEntity
-
-**Extends**: `TeslaBaseEntity`  
-**Responsibility**: Energy site-specific functionality
-
-**Key Properties**:
-
-- `site` - The energy site object from coordinator data
-- `site_id` - Energy site identifier
-- `site_name` - User-friendly site name
-
-**Usage**: All Powerwall/energy-related entities inherit from this
-
-**Example Subclasses**:
-
-- `TeslaEnergyBattery` - Battery level sensor
-- `TeslaEnergyGridStatus` - Grid connection status
-- `TeslaEnergyOperationMode` - Site operation mode selector
-
 ---
 
 ## 3. Entity Platforms (Domain Modules)
@@ -178,13 +145,11 @@ TeslaBaseEntity (Common functionality)
 ### Entity Type Distribution
 
 ```
-Sensors (668 LOC)              18 classes
-├── Vehicle: Battery, Range, Charger, Temperature, etc.
-└── Site: Power, Battery, Backup Reserve
+Sensors (668 LOC)              15 classes
+└── Vehicle: Battery, Range, Charger, Temperature, etc.
 
-Binary Sensors (300 LOC)       12 classes
-├── Vehicle: Charging, Online, Doors, Windows
-└── Site: Grid Status, Battery Charging
+Binary Sensors (300 LOC)       10 classes
+└── Vehicle: Charging, Online, Doors, Windows
 
 Switches (189 LOC)             5 classes
 ├── Charger, Sentry Mode, Polling, Valet Mode
@@ -202,13 +167,11 @@ Buttons (153 LOC)              7 classes
 Locks (78 LOC)                 2 classes
 └── Door Locks, Charge Port Latch
 
-Selects (460 LOC)              6 classes
-├── Vehicle: Seat Heaters, Overheat Protection
-└── Site: Operation Mode, Export Rule, Grid Charging
+Selects (460 LOC)              3 classes
+└── Vehicle: Seat Heaters, Steering Wheel, Overheat Protection
 
-Numbers (151 LOC)              3 classes
-├── Charge Limit, Charging Amps
-└── Backup Reserve
+Numbers (151 LOC)              2 classes
+└── Charge Limit, Charging Amps
 
 Device Tracker (91 LOC)        2 classes
 └── Car Location, Route Destination
@@ -233,8 +196,6 @@ Text (66 LOC)                  1 class
 - `TeslaCarTemp` - Inside/outside temperature
 - `TeslaCarOdometer` - Total miles/km driven
 - `TeslaCarArrivalTime` - Route arrival time
-- `TeslaEnergyBattery` - Powerwall battery level
-- `TeslaEnergyPowerSensor` - Solar/grid/load power
 
 **Pattern**:
 
@@ -270,7 +231,6 @@ class TeslaSensorClass(TeslaCarEntity, SensorEntity):
 - `TeslaCarChargerConnection` - Charger physically connected
 - `TeslaCarDoors` - Door open/closed
 - `TeslaCarWindows` - Window open/closed
-- `TeslaEnergyGridStatus` - Grid connected/disconnected
 
 **Pattern**:
 
@@ -427,9 +387,6 @@ class TeslaLockClass(TeslaCarEntity, LockEntity):
 - `TeslaCarHeatedSeat` - Seat heater level selection
 - `TeslaCarHeatedSteeringWheel` - Steering wheel heater level
 - `TeslaCarCabinOverheatProtection` - Overheat protection mode
-- `TeslaEnergyOperationMode` - Site operation mode
-- `TeslaEnergyExportRule` - Energy export rule
-- `TeslaEnergyGridCharging` - Grid charging mode
 
 **Pattern**:
 
@@ -455,7 +412,6 @@ class TeslaSelectClass(TeslaCarEntity, SelectEntity):
 
 - `TeslaCarChargeLimit` - Set charge limit percentage
 - `TeslaCarChargingAmps` - Set charging amps
-- `TeslaEnergyBackupReserve` - Set Powerwall reserve level
 
 **Pattern**:
 

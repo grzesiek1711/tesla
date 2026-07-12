@@ -1,9 +1,8 @@
 """Const file for Tesla cars."""
 
-VERSION = "3.27.1"
+VERSION = "4.0.0"
 CONF_EXPIRATION = "expiration"
 CONF_INCLUDE_VEHICLES = "include_vehicles"
-CONF_INCLUDE_ENERGYSITES = "include_energysites"
 CONF_POLLING_POLICY = "polling_policy"
 CONF_WAKE_ON_START = "enable_wake_on_start"
 CONF_ENABLE_TESLAMATE = "enable_teslamate"

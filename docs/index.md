@@ -103,7 +103,6 @@
 - Coordinator data state management
 - Configuration data structures
 - Car state schema (from Tesla API)
-- Energy site state schema (Powerwall)
 - TeslaMate state mappings
 - Type hints and validation patterns
 
@@ -236,5 +235,5 @@ Each file is designed to be self-contained but cross-references related document
 
 ---
 
-**Last Updated**: Generated for Tesla Custom Integration v3.26.3
-**Focus**: Home Assistant custom component with cloud polling, supporting Tesla vehicles and energy sites
+**Last Updated**: Generated for Tesla Custom Integration v4.0.0
+**Focus**: Home Assistant custom component with cloud polling, supporting Tesla vehicles

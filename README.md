@@ -20,7 +20,7 @@ A fork of the previous official Tesla integration in Home Assistant which has be
 
 ## What This Integration Does
 
-This integration provides comprehensive Home Assistant support for Tesla vehicles and energy sites:
+This integration provides comprehensive Home Assistant support for Tesla vehicles:
 
 **For Tesla Vehicles**:
 
@@ -30,12 +30,10 @@ This integration provides comprehensive Home Assistant support for Tesla vehicle
 - Charging management (set limit, disable charger)
 - Charging status and energy tracking
 
-**For Tesla Energy Sites (Powerwall)**:
-
-- Battery level and power flow monitoring
-- Grid connection status
-- Solar generation and load tracking
-- Operation mode and export rule control
+> **Note**: This is a vehicles-only fork. Tesla Energy Site (Powerwall/Solar)
+> support was removed in v4.0.0. If you need Powerwall support, use the 3.x
+> release line or the upstream [alandtse/tesla](https://github.com/alandtse/tesla)
+> integration.
 
 ---
 
@@ -180,24 +178,6 @@ Sensors work without proxy; only commands (lock, climate, etc.) require it.
 **Text**:
 
 - TeslaMate ID (for syncing)
-
-### Energy Site Entities
-
-**Sensors**:
-
-- Battery level and reserve, solar power
-- Grid power, home load power
-- Battery remaining (Wh)
-
-**Binary Sensors**:
-
-- Grid connection status, battery charging status
-
-**Selects**:
-
-- Operation mode (self consumption, backup, autonomous)
-- Export rule (PV only, battery OK, PV and battery)
-- Grid charging enable/disable
 
 ---
 

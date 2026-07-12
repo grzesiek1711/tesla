@@ -15,7 +15,6 @@ from homeassistant.setup import async_setup_component
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 from teslajsonpy.car import TeslaCar
 from teslajsonpy.const import AUTH_DOMAIN
-from teslajsonpy.energy import SolarPowerwallSite, SolarSite
 
 from custom_components.tesla_custom.const import (
     CONF_API_PROXY_CERT,
@@ -33,7 +32,7 @@ from .const import (
     TEST_USERNAME,
     TEST_VALID_EXPIRATION,
 )
-from .mock_data import car as car_mock_data, energysite as energysite_mock_data
+from .mock_data import car as car_mock_data
 
 
 def setup_mock_controller(mock_controller):
@@ -58,22 +57,6 @@ def setup_mock_controller(mock_controller):
             mock_controller.return_value,
             car_mock_data.VEHICLE_DATA,
         )
-    }
-
-    instance.generate_energysite_objects.return_value = {
-        12345: SolarSite(
-            mock_controller.api,
-            energysite_mock_data.ENERGYSITE_SOLAR,
-            energysite_mock_data.SITE_CONFIG_SOLAR,
-            energysite_mock_data.SITE_DATA,
-        ),
-        67890: SolarPowerwallSite(
-            mock_controller.api,
-            energysite_mock_data.ENERGYSITE_BATTERY,
-            energysite_mock_data.SITE_CONFIG_POWERWALL,
-            energysite_mock_data.BATTERY_DATA,
-            energysite_mock_data.BATTERY_SUMMARY,
-        ),
     }
 
 
