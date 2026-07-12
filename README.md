@@ -76,8 +76,8 @@ To use this integration, you need a Tesla refresh token (from your Tesla account
 
 ### Method 2: Manual Installation
 
-1. Download all files from `custom_components/tesla_custom/` in the repository
-2. In your Home Assistant config directory, create folder: `custom_components/tesla_custom/`
+1. Download all files from `custom_components/tesla_extended/` in the repository
+2. In your Home Assistant config directory, create folder: `custom_components/tesla_extended/`
 3. Place downloaded files in that folder
 4. Restart Home Assistant
 5. Add integration as above
@@ -183,7 +183,7 @@ Entity names are localized through Home Assistant's translation system. English
 and **Polish (`pl`)** translations are bundled for all entity names and the
 configuration flow. Home Assistant automatically uses the translation matching
 your configured language and falls back to English otherwise. Contributions of
-additional languages are welcome in `custom_components/tesla_custom/translations/`.
+additional languages are welcome in `custom_components/tesla_extended/translations/`.
 
 ---
 
@@ -214,11 +214,11 @@ automation:
       platform: time
       at: "07:00:00"
     action:
-      - service: tesla_custom.set_update_interval
+      - service: tesla_extended.set_update_interval
         data:
           interval: 60 # Poll frequently for 1 minute
       - delay: "00:01:00"
-      - service: tesla_custom.set_update_interval
+      - service: tesla_extended.set_update_interval
         data:
           interval: 660 # Back to normal
 ```
@@ -317,5 +317,5 @@ Apache License 2.0 - See [LICENSE](LICENSE) file
 [releases]: https://github.com/alandtse/tesla/releases
 [download-all]: https://img.shields.io/github/downloads/alandtse/tesla/total?style=for-the-badge
 [download-latest]: https://img.shields.io/github/downloads/alandtse/tesla/latest/total?style=for-the-badge
-[add-integration]: https://my.home-assistant.io/redirect/config_flow_start?domain=tesla_custom
+[add-integration]: https://my.home-assistant.io/redirect/config_flow_start?domain=tesla_extended
 [add-integration-badge]: https://my.home-assistant.io/badges/config_flow_start.svg

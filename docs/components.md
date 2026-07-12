@@ -24,7 +24,7 @@ graph TB
 
 ## 1. Core Coordinator: TeslaDataUpdateCoordinator
 
-**File**: `custom_components/tesla_custom/__init__.py`  
+**File**: `custom_components/tesla_extended/__init__.py`  
 **Class**: `TeslaDataUpdateCoordinator`  
 **Base**: `DataUpdateCoordinator` (Home Assistant)  
 **Responsibility**: Central hub for all data fetching, caching, and distribution
@@ -92,7 +92,7 @@ coordinator.data = {
 
 ## 2. Base Entity Classes
 
-**File**: `custom_components/tesla_custom/base.py`
+**File**: `custom_components/tesla_extended/base.py`
 
 ### Class Hierarchy
 
@@ -403,7 +403,7 @@ class TeslaLocationClass(TeslaCarEntity, TrackerEntity):
 
 ## 4. Configuration System
 
-**File**: `custom_components/tesla_custom/config_flow.py`  
+**File**: `custom_components/tesla_extended/config_flow.py`  
 **Classes**: `TeslaConfigFlow`, `OptionsFlowHandler`
 
 ### TeslaConfigFlow
@@ -468,7 +468,7 @@ class TeslaLocationClass(TeslaCarEntity, TrackerEntity):
 **Usage**:
 
 ```yaml
-service: tesla_custom.set_update_interval
+service: tesla_extended.set_update_interval
 data:
   config_entry_id: "..."
   interval: 300

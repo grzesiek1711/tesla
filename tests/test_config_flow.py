@@ -15,7 +15,7 @@ from pytest_homeassistant_custom_component.common import MockConfigEntry
 from teslajsonpy.const import AUTH_DOMAIN
 from teslajsonpy.exceptions import IncompleteCredentials, TeslaException
 
-from custom_components.tesla_custom.const import (
+from custom_components.tesla_extended.const import (
     ATTR_POLLING_POLICY_CONNECTED,
     CONF_ENABLE_TESLAMATE,
     CONF_EXPIRATION,
@@ -49,7 +49,7 @@ async def test_form(hass):
 
     with (
         patch(
-            "custom_components.tesla_custom.config_flow.TeslaAPI.connect",
+            "custom_components.tesla_extended.config_flow.TeslaAPI.connect",
             return_value={
                 "refresh_token": TEST_TOKEN,
                 CONF_ACCESS_TOKEN: TEST_ACCESS_TOKEN,
@@ -57,10 +57,10 @@ async def test_form(hass):
             },
         ),
         patch(
-            "custom_components.tesla_custom.async_setup", return_value=True
+            "custom_components.tesla_extended.async_setup", return_value=True
         ) as mock_setup,
         patch(
-            "custom_components.tesla_custom.async_setup_entry", return_value=True
+            "custom_components.tesla_extended.async_setup_entry", return_value=True
         ) as mock_setup_entry,
     ):
         result2 = await hass.config_entries.flow.async_configure(
@@ -90,7 +90,7 @@ async def test_form_invalid_auth(hass):
     )
 
     with patch(
-        "custom_components.tesla_custom.config_flow.TeslaAPI.connect",
+        "custom_components.tesla_extended.config_flow.TeslaAPI.connect",
         side_effect=TeslaException(401),
     ):
         result2 = await hass.config_entries.flow.async_configure(
@@ -109,7 +109,7 @@ async def test_form_invalid_auth_incomplete_credentials(hass):
     )
 
     with patch(
-        "custom_components.tesla_custom.config_flow.TeslaAPI.connect",
+        "custom_components.tesla_extended.config_flow.TeslaAPI.connect",
         side_effect=IncompleteCredentials(401),
     ):
         result2 = await hass.config_entries.flow.async_configure(
@@ -128,7 +128,7 @@ async def test_form_cannot_connect(hass):
     )
 
     with patch(
-        "custom_components.tesla_custom.config_flow.TeslaAPI.connect",
+        "custom_components.tesla_extended.config_flow.TeslaAPI.connect",
         side_effect=TeslaException(code=HTTPStatus.NOT_FOUND),
     ):
         result2 = await hass.config_entries.flow.async_configure(
@@ -155,7 +155,7 @@ async def test_form_repeat_identifier(hass):
     )
 
     with patch(
-        "custom_components.tesla_custom.config_flow.TeslaAPI.connect",
+        "custom_components.tesla_extended.config_flow.TeslaAPI.connect",
         return_value={
             "refresh_token": TEST_TOKEN,
             CONF_ACCESS_TOKEN: TEST_ACCESS_TOKEN,
@@ -188,7 +188,7 @@ async def test_form_reauth(hass):
     )
 
     with patch(
-        "custom_components.tesla_custom.config_flow.TeslaAPI.connect",
+        "custom_components.tesla_extended.config_flow.TeslaAPI.connect",
         return_value={
             "refresh_token": TEST_TOKEN,
             CONF_ACCESS_TOKEN: TEST_ACCESS_TOKEN,
@@ -208,7 +208,7 @@ async def test_import(hass):
     """Test import step."""
 
     with patch(
-        "custom_components.tesla_custom.config_flow.TeslaAPI.connect",
+        "custom_components.tesla_extended.config_flow.TeslaAPI.connect",
         return_value={
             "refresh_token": TEST_TOKEN,
             CONF_ACCESS_TOKEN: TEST_ACCESS_TOKEN,

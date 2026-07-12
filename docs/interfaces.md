@@ -20,7 +20,7 @@ graph TB
 
 ## 1. TeslaDataUpdateCoordinator Public Interface
 
-**File**: `custom_components/tesla_custom/__init__.py`
+**File**: `custom_components/tesla_extended/__init__.py`
 
 ### Data Structure
 
@@ -156,7 +156,7 @@ async def async_remove_config_entry_device(
 
 ## 2. Entity Base Class Interfaces
 
-**File**: `custom_components/tesla_custom/base.py`
+**File**: `custom_components/tesla_extended/base.py`
 
 ### TeslaBaseEntity Interface
 
@@ -300,7 +300,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities, discovery_in
 
 ## 4. Configuration Flow Interface
 
-**File**: `custom_components/tesla_custom/config_flow.py`
+**File**: `custom_components/tesla_extended/config_flow.py`
 
 ### TeslaConfigFlow Interface
 
@@ -388,7 +388,7 @@ class Vehicle:
 
 ```python
 hass.bus.async_fire(
-    event_type="tesla_custom_vehicle_updated",
+    event_type="tesla_extended_vehicle_updated",
     event_data={"vehicle_id": vin}
 )
 ```
@@ -494,7 +494,7 @@ vehicle["response"] = {
 
 ## 8. TeslaMate Integration Interface
 
-**File**: `custom_components/tesla_custom/teslamate.py`
+**File**: `custom_components/tesla_extended/teslamate.py`
 
 ### TeslaMate Class Interface
 
@@ -529,11 +529,11 @@ class TeslaMate:
 
 ## 9. Service Interface
 
-**File**: `custom_components/tesla_custom/services.py`
+**File**: `custom_components/tesla_extended/services.py`
 
 ### Available Services
 
-#### `tesla_custom.set_update_interval`
+#### `tesla_extended.set_update_interval`
 
 **Data Schema**:
 
@@ -549,7 +549,7 @@ class TeslaMate:
 **Example**:
 
 ```yaml
-service: tesla_custom.set_update_interval
+service: tesla_extended.set_update_interval
 data:
   config_entry_id: "abc123"
   interval: 300

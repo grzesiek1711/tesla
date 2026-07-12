@@ -66,7 +66,7 @@ This project uses [Black](https://github.com/ambv/black) for code formatting (88
 black .
 
 # Format specific directory
-black custom_components/tesla_custom/
+black custom_components/tesla_extended/
 
 # Check formatting without changes
 black --check .
@@ -81,7 +81,7 @@ All code must have proper type hints and pass mypy validation.
 mypy .
 
 # Type check specific file
-mypy custom_components/tesla_custom/sensor.py
+mypy custom_components/tesla_extended/sensor.py
 ```
 
 ### Linting with Prospector
@@ -319,7 +319,7 @@ to have a service to adjust the protection temperature.
 Use case: Automation to lower the threshold on hot summer days and raise
 it in cooler weather to save battery.
 
-Proposed: Add `tesla_custom.set_cop_temp` service similar to
+Proposed: Add `tesla_extended.set_cop_temp` service similar to
 existing `set_update_interval`.
 ```
 

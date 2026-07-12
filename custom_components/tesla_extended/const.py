@@ -1,12 +1,12 @@
 """Const file for Tesla cars."""
 
-VERSION = "5.1.1"
+VERSION = "1.0.0"
 CONF_EXPIRATION = "expiration"
 CONF_INCLUDE_VEHICLES = "include_vehicles"
 CONF_POLLING_POLICY = "polling_policy"
 CONF_WAKE_ON_START = "enable_wake_on_start"
 CONF_ENABLE_TESLAMATE = "enable_teslamate"
-DOMAIN = "tesla_custom"
+DOMAIN = "tesla_extended"
 ATTRIBUTION = "Data provided by Tesla"
 DATA_LISTENER = "listener"
 DEFAULT_SCAN_INTERVAL = 660

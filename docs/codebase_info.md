@@ -56,7 +56,7 @@ Component Breakdown:
 
 ```
 tesla/
-├── custom_components/tesla_custom/     # Main integration code
+├── custom_components/tesla_extended/     # Main integration code
 │   ├── __init__.py                     # Core coordinator & setup
 │   ├── base.py                         # Entity base classes
 │   ├── config_flow.py                  # Configuration UI
@@ -106,7 +106,7 @@ tesla/
 
 ### Integration Setup
 
-- **File**: `custom_components/tesla_custom/__init__.py`
+- **File**: `custom_components/tesla_extended/__init__.py`
 - **Entry Functions**:
   - `async_setup()` - Initial platform setup
   - `async_setup_entry()` - Configure a new integration entry
@@ -115,7 +115,7 @@ tesla/
 
 ### Configuration
 
-- **File**: `custom_components/tesla_custom/config_flow.py`
+- **File**: `custom_components/tesla_extended/config_flow.py`
 - **Class**: `TeslaConfigFlow` - Handles user authentication and options
 - **Process**: OAuth token acquisition → account validation → entity creation
 
@@ -192,7 +192,7 @@ prospector                # Full linting
 
 | Property               | Value                       |
 | ---------------------- | --------------------------- |
-| **Domain**             | tesla_custom                |
+| **Domain**             | tesla_extended                |
 | **IoT Class**          | cloud_polling               |
 | **Config Flow**        | Yes (OAuth-based)           |
 | **Dependencies**       | http                        |
@@ -222,7 +222,7 @@ prospector                # Full linting
 
 ### Version Management
 
-- Version sources: `pyproject.toml`, `custom_components/tesla_custom/const.py`, `manifest.json`
+- Version sources: `pyproject.toml`, `custom_components/tesla_extended/const.py`, `manifest.json`
 - Automated via semantic-release on git tags
 - Changelog sections: feature, fix, breaking, documentation, performance, refactor
 

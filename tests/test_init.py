@@ -10,12 +10,12 @@ from homeassistant.helpers import device_registry as dr
 import pytest
 from teslajsonpy.car import TeslaCar
 
-from custom_components.tesla_custom import (
+from custom_components.tesla_extended import (
     TeslaDataUpdateCoordinator,
     async_remove_config_entry_device,
 )
-from custom_components.tesla_custom.base import device_identifier
-from custom_components.tesla_custom.const import DOMAIN
+from custom_components.tesla_extended.base import device_identifier
+from custom_components.tesla_extended.const import DOMAIN
 
 from .common import setup_platform
 from .const import TEST_USERNAME

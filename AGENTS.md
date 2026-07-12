@@ -22,7 +22,7 @@ This file provides a comprehensive reference for AI agents and developers workin
 
 ```
 tesla/
-├── custom_components/tesla_custom/       # Main integration code
+├── custom_components/tesla_extended/       # Main integration code
 │   ├── __init__.py                       # Core: Setup, coordinator, config entry handling
 │   ├── base.py                           # Entity base classes (TeslaBaseEntity, TeslaCarEntity)
 │   ├── config_flow.py                    # Configuration UI (OAuth, options)
@@ -287,7 +287,7 @@ black custom_components/  # Format integration only
 
 ```bash
 mypy .                  # Type check everything
-mypy custom_components/tesla_custom/sensor.py  # Single file
+mypy custom_components/tesla_extended/sensor.py  # Single file
 ```
 
 ### Comprehensive Linting
@@ -455,7 +455,7 @@ The project includes a Docker dev container (`.devcontainer/`):
 
 | Property           | Value         |
 | ------------------ | ------------- |
-| **Domain**         | tesla_custom  |
+| **Domain**         | tesla_extended  |
 | **Version**        | 5.1.0         |
 | **Min HA Version** | 2024.11.0     |
 | **License**        | Apache-2.0    |

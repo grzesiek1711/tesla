@@ -1,5 +1,5 @@
 {
-  "domain": "tesla_custom",
+  "domain": "tesla_extended",
   "name": "Tesla Extended",
   "after_dependencies": ["mqtt"],
   "codeowners": ["@alandtse"],
@@ -25,5 +25,5 @@
   "issue_tracker": "https://github.com/alandtse/tesla/issues",
   "loggers": ["teslajsonpy"],
   "requirements": ["git+https://github.com/grzesiek1711/teslajsonpy.git@main"],
-  "version": "5.1.1"
+  "version": "1.0.0"
 }

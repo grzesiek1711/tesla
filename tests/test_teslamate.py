@@ -5,7 +5,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from custom_components.tesla_custom.teslamate import MAP_VEHICLE_STATE, TeslaMate
+from custom_components.tesla_extended.teslamate import MAP_VEHICLE_STATE, TeslaMate
 
 from .mock_data import car as car_mock_data
 

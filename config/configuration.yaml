@@ -4,7 +4,7 @@ logger:
   default: info
   logs:
     homeassistant.setup: debug
-    custom_components.tesla_custom: debug
+    custom_components.tesla_extended: debug
 
     teslajsonpy: debug
 # If you need to debug uncommment the line below (doc: https://www.home-assistant.io/integrations/debugpy/)

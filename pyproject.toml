@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "tesla"
-version = "5.1.1"
+version = "1.0.0"
 description = "A fork of the Home Assistant tesla integration using a oauth proxy to login."
 authors = ["Alan D. Tse <alandtse@gmail.com>"]
 license = "Apache-2.0"
@@ -33,8 +33,8 @@ version_toml = [
   "pyproject.toml:tool.poetry.version"
 ]
 version_variables = [
-  "custom_components/tesla_custom/const.py:VERSION",
-  "custom_components/tesla_custom/manifest.json:version"
+  "custom_components/tesla_extended/const.py:VERSION",
+  "custom_components/tesla_extended/manifest.json:version"
 ]
 upload_to_pypi = false
 upload_to_release = false

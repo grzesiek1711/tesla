@@ -41,10 +41,10 @@ sequenceDiagram
 **Steps**:
 
 1. Home Assistant calls `async_setup()` at startup
-2. Register `tesla_custom.set_update_interval` service
+2. Register `tesla_extended.set_update_interval` service
 3. Return True to confirm platform readiness
 
-**Code Location**: `custom_components/tesla_custom/__init__.py::async_setup()`
+**Code Location**: `custom_components/tesla_extended/__init__.py::async_setup()`
 
 ### Phase 2: Config Entry Setup (`async_setup_entry`)
 
@@ -85,7 +85,7 @@ sequenceDiagram
 8. Start polling loop with configured interval
 9. Return True to confirm setup
 
-**Code Location**: `custom_components/tesla_custom/__init__.py::async_setup_entry()`
+**Code Location**: `custom_components/tesla_extended/__init__.py::async_setup_entry()`
 
 **Home Assistant Integration Points**:
 
@@ -97,7 +97,7 @@ sequenceDiagram
 
 ## 2. Configuration Flow Workflow
 
-**File**: `custom_components/tesla_custom/config_flow.py`
+**File**: `custom_components/tesla_extended/config_flow.py`
 
 ### Config Flow Steps
 
@@ -388,7 +388,7 @@ async def async_press(self):
 
 ## 6. TeslaMate MQTT Sync Workflow
 
-**File**: `custom_components/tesla_custom/teslamate.py`  
+**File**: `custom_components/tesla_extended/teslamate.py`  
 **Enabled**: Via config option `teslamate_enabled: True`
 
 ### Enable Process

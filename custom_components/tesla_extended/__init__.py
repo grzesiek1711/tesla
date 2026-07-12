@@ -343,7 +343,7 @@ async def async_unload_entry(hass, config_entry) -> bool:
 async def async_remove_config_entry_device(
     hass: HomeAssistant, config_entry: ConfigEntry, device_entry: dr.DeviceEntry
 ) -> bool:
-    """Remove a tesla_custom config entry from a device.
+    """Remove a tesla_extended config entry from a device.
 
     Allow removal only for devices that are no longer provided by the
     integration (e.g. a vehicle that was removed from the Tesla account). The

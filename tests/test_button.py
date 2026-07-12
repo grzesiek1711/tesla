@@ -73,7 +73,7 @@ async def test_force_data_update_press(hass: HomeAssistant) -> None:
     await setup_platform(hass, BUTTON_DOMAIN)
 
     with patch(
-        "custom_components.tesla_custom.base.TeslaCarEntity.update_controller"
+        "custom_components.tesla_extended.base.TeslaCarEntity.update_controller"
     ) as mock_force_data_update:
         await hass.services.async_call(
             BUTTON_DOMAIN,

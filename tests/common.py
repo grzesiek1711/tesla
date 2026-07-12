@@ -15,7 +15,7 @@ from pytest_homeassistant_custom_component.common import MockConfigEntry
 from teslajsonpy.car import TeslaCar
 from teslajsonpy.const import AUTH_DOMAIN
 
-from custom_components.tesla_custom.const import (
+from custom_components.tesla_extended.const import (
     CONF_EXPIRATION,
     DOMAIN as TESLA_DOMIN,
 )
@@ -73,9 +73,9 @@ async def setup_platform(hass: HomeAssistant, platform: str) -> MockConfigEntry:
     mock_entry.add_to_hass(hass)
 
     with (
-        patch("custom_components.tesla_custom.PLATFORMS", [platform]),
+        patch("custom_components.tesla_extended.PLATFORMS", [platform]),
         patch(
-            "custom_components.tesla_custom.TeslaAPI", autospec=True
+            "custom_components.tesla_extended.TeslaAPI", autospec=True
         ) as mock_controller,
     ):
         setup_mock_controller(mock_controller)

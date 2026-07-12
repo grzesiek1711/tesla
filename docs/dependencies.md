@@ -392,7 +392,7 @@ pytest-httpx = ">=0.24.0"
 
 ```json
 {
-  "domain": "tesla_custom",
+  "domain": "tesla_extended",
   "name": "Tesla Custom Integration",
   "dependencies": ["http"],
   "requirements": ["git+https://github.com/grzesiek1711/teslajsonpy.git@dev"],

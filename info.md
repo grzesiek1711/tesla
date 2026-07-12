@@ -58,5 +58,5 @@ _Component built with [integration_blueprint][integration_blueprint]._
 [user_profile]: https://github.com/alandtse
 [download-all]: https://img.shields.io/github/downloads/alandtse/tesla/total?style=for-the-badge
 [download-latest]: https://img.shields.io/github/downloads/alandtse/tesla/latest/total?style=for-the-badge
-[add-integration]: https://my.home-assistant.io/redirect/config_flow_start?domain=tesla_custom
+[add-integration]: https://my.home-assistant.io/redirect/config_flow_start?domain=tesla_extended
 [add-integration-badge]: https://my.home-assistant.io/badges/config_flow_start.svg

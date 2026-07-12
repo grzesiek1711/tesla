@@ -190,7 +190,7 @@
 
 This integration follows Home Assistant custom component conventions:
 
-- **Domain**: `tesla_custom`
+- **Domain**: `tesla_extended`
 - **IoT Class**: Cloud polling
 - **Async Pattern**: Event-driven async/await throughout
 - **Entity Framework**: Inherits from Home Assistant entity platform classes
