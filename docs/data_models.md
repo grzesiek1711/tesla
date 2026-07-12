@@ -411,18 +411,46 @@ raw_temp = 22.5
 
 ### TeslaMate MQTT Data Mapping
 
-TeslaMate MQTT topics map to vehicle state fields:
+TeslaMate MQTT topics are mapped to the corresponding Tesla API
+`vehicle_data` sub-paths (`drive_state`, `climate_state`, `vehicle_state`,
+`charge_state`, `vehicle_config`) so the same entities work whether data comes
+from cloud polling or TeslaMate. The mapping dictionaries live in
+`teslamate.py` (`MAP_DRIVE_STATE`, `MAP_CLIMATE_STATE`, `MAP_VEHICLE_STATE`,
+`MAP_CHARGE_STATE`, `MAP_VEHICLE_CONFIG`).
+
+Coverage includes (non-exhaustive):
 
 ```python
-mqtt_topic_to_field = {
-    "teslamate/cars/{car_id}/state": "state",
-    "teslamate/cars/{car_id}/charge_state": "charging_state",
-    "teslamate/cars/{car_id}/latitude": "latitude",
-    "teslamate/cars/{car_id}/longitude": "longitude",
-    "teslamate/cars/{car_id}/battery_level": "battery_level",
-    # ... and many more
-}
+# drive_state
+latitude, longitude, shift_state, speed, heading, power
+# climate_state
+is_climate_on, inside_temp, outside_temp, is_preconditioning
+# vehicle_state
+locked, sentry_mode, odometer, trunk_open (rt), frunk_open (ft),
+is_user_present, center_display_state, tpms_pressure_fl/fr/rl/rr,
+driver/passenger front/rear door + window open, sun_roof_state,
+sun_roof_percent_open, version (car_version)
+# charge_state
+battery_level, usable_battery_level, rated/est/ideal battery range,
+charge_energy_added, charger_actual_current, charger_power, charger_voltage,
+charger_phases, time_to_full_charge, charge_limit_soc, charge_port_door_open,
+charge_current_request(_max), charging_state, scheduled_charging_start_time
+# vehicle_config
+sun_roof_installed
 ```
+
+Special handling:
+
+- **`active_route`** (JSON blob): parsed into `drive_state`
+  `active_route_destination`, `active_route_energy_at_arrival`,
+  `active_route_miles_to_arrival`, `active_route_minutes_to_arrival`,
+  `active_route_traffic_minutes_delay` and destination lat/long. An
+  `{"error": ...}` payload clears all route attributes.
+- **Software update** topics (`update_version`, `download_perc`,
+  `install_perc`): merged into the `vehicle_state.software_update` object.
+
+Values are cast to the types the entities expect (e.g. km→miles for range and
+odometer, km/h→mph for speed, bool strings to `bool`/open-close ints).
 
 ---
 

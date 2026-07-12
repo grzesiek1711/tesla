@@ -2,6 +2,26 @@
 
 
 
+## v1.1.0 (2026-07-12)
+
+Expanded TeslaMate MQTT coverage so far more entities update in near real-time
+(as often as every ~500 ms while driving) instead of waiting for cloud polling.
+
+### Feature
+
+* feat(teslamate): consume all TeslaMate MQTT topics that map to an existing
+  entity and feed them into the same sensors/binary sensors used by polling.
+  Newly synced data includes drive power; the individual doors and windows;
+  sunroof state and percent open; charger phases and scheduled charging start
+  time; the active navigation route (destination, ETA, distance, traffic delay
+  and destination coordinates, parsed from the `active_route` JSON blob); and
+  the installed/available software version.
+
+* feat(teslamate): convert TeslaMate metric values to the units the Tesla API
+  reports (km→miles, km/h→mph) and cast door/window booleans to the open/closed
+  integers the entities expect, so Home Assistant unit handling stays
+  consistent regardless of the data source.
+
 ## v1.0.0 (2026-07-12)
 
 Initial release of **Tesla Extended**, a read-only Home Assistant integration

@@ -109,6 +109,22 @@ After adding the integration, open its options dialog:
 | **Polling Policy**   | Always  | Always / Connected Only / Conserve | Sleep optimization strategy              |
 | **TeslaMate MQTT**   | Off     | On/Off                             | Sync data from TeslaMate (requires MQTT) |
 
+> **TeslaMate MQTT sync (near real-time).** TeslaMate talks to Tesla over a
+> streaming/websocket connection and publishes vehicle data to MQTT far more
+> frequently than cloud polling (as often as every ~500 ms while driving). When
+> enabled, this integration consumes **all** TeslaMate topics that map to an
+> existing entity and feeds them into the same sensors/binary sensors used by
+> polling, so those entities update almost instantly. Covered data includes:
+> location, speed, heading, power, shift state; inside/outside temperature,
+> climate on and preconditioning; battery level, ranges, and the full set of
+> charging values (state, limit, amps, voltage, power, phases, energy added,
+> time to full, scheduled start); doors, windows, trunk/frunk, locks, sentry,
+> sunroof, TPMS pressures, odometer, user-present and center-display state;
+> the active navigation route (destination, ETA, distance, traffic delay,
+> destination coordinates); and the installed/available software version.
+> Values TeslaMate reports in metric (km, km/h, °C) are converted to match the
+> Tesla API so Home Assistant unit handling stays consistent.
+
 ---
 
 ## Available Entities

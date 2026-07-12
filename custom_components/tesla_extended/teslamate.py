@@ -5,6 +5,7 @@ with the latest data.
 """
 
 import asyncio
+import json
 import logging
 import time
 from typing import TYPE_CHECKING
@@ -75,12 +76,49 @@ def cast_speed(speed: int) -> int:
     return int(speed_miles)
 
 
+def cast_open(val: str) -> int:
+    """Convert a bool string to an open/closed int (1 open, 0 closed).
+
+    The Tesla API represents door and window states as integers where a
+    non-zero value means open. TeslaMate publishes them as bool strings.
+    """
+    return 1 if cast_bool(val) else 0
+
+
+def cast_int(val) -> int:
+    """Convert a numeric string to an int, tolerating float payloads.
+
+    TeslaMate can publish values such as ``"-9"`` or ``"3.0"``; ``int()``
+    alone raises on the latter, so route through ``float`` first.
+    """
+    return int(float(val))
+
+
+def cast_optional_float(val) -> float | None:
+    """Convert a payload to a float, mapping TeslaMate's "nil"/"None" to None."""
+    if val is None:
+        return None
+    if isinstance(val, str) and val.strip().lower() in ("", "nil", "none", "null"):
+        return None
+    return float(val)
+
+
+def cast_optional_str(val) -> str | None:
+    """Convert a payload to a str, mapping TeslaMate's "nil"/"None" to None."""
+    if val is None:
+        return None
+    if isinstance(val, str) and val.strip().lower() in ("nil", "none", "null"):
+        return None
+    return str(val)
+
+
 MAP_DRIVE_STATE = {
     "latitude": ("latitude", float),
     "longitude": ("longitude", float),
     "shift_state": ("shift_state", str),
     "speed": ("speed", cast_speed),
     "heading": ("heading", int),
+    "power": ("power", cast_int),
 }
 
 MAP_CLIMATE_STATE = {
@@ -102,6 +140,21 @@ MAP_VEHICLE_STATE = {
     "frunk_open": ("ft", cast_trunk_open),
     "is_user_present": ("is_user_present", cast_bool),
     "center_display_state": ("center_display_state", int),
+    # Individual doors (Tesla API keys: df/dr/pf/pr).
+    "driver_front_door_open": ("df", cast_open),
+    "driver_rear_door_open": ("dr", cast_open),
+    "passenger_front_door_open": ("pf", cast_open),
+    "passenger_rear_door_open": ("pr", cast_open),
+    # Individual windows (Tesla API keys: *_window).
+    "driver_front_window_open": ("fd_window", cast_open),
+    "driver_rear_window_open": ("rd_window", cast_open),
+    "passenger_front_window_open": ("fp_window", cast_open),
+    "passenger_rear_window_open": ("rp_window", cast_open),
+    # Sunroof (only present on vehicles with a sunroof).
+    "sun_roof_state": ("sun_roof_state", str),
+    "sun_roof_percent_open": ("sun_roof_percent_open", cast_int),
+    # Software version reported by TeslaMate maps to the API's car_version.
+    "version": ("car_version", str),
 }
 
 MAP_CHARGE_STATE = {
@@ -114,12 +167,39 @@ MAP_CHARGE_STATE = {
     "charger_actual_current": ("charger_actual_current", int),
     "charger_power": ("charger_power", int),
     "charger_voltage": ("charger_voltage", int),
+    "charger_phases": ("charger_phases", cast_int),
     "time_to_full_charge": ("time_to_full_charge", float),
     "charge_limit_soc": ("charge_limit_soc", int),
     "charge_port_door_open": ("charge_port_door_open", cast_bool),
     "charge_current_request": ("charge_current_request", int),
     "charge_current_request_max": ("charge_current_request_max", int),
     "charging_state": ("charging_state", str),
+    "scheduled_charging_start_time": (
+        "scheduled_charging_start_time",
+        cast_optional_str,
+    ),
+}
+
+MAP_VEHICLE_CONFIG = {
+    "sun_roof_installed": ("sun_roof_installed", cast_bool),
+}
+
+# Keys published inside the ``active_route`` JSON blob mapped to the Tesla API
+# ``drive_state`` attributes consumed by the arrival/route entities.
+MAP_ACTIVE_ROUTE = {
+    "destination": "active_route_destination",
+    "energy_at_arrival": "active_route_energy_at_arrival",
+    "miles_to_arrival": "active_route_miles_to_arrival",
+    "minutes_to_arrival": "active_route_minutes_to_arrival",
+    "traffic_minutes_delay": "active_route_traffic_minutes_delay",
+}
+
+# Keys published inside the ``software_update`` state mapped from the discrete
+# TeslaMate topics.
+MAP_SOFTWARE_UPDATE = {
+    "update_version": ("version", cast_optional_str),
+    "download_perc": ("download_perc", cast_int),
+    "install_perc": ("install_perc", cast_int),
 }
 
 
@@ -335,6 +415,17 @@ class TeslaMate:
             attr, cast = MAP_CHARGE_STATE[mqtt_attr]
             self.update_car_state(car, "charge_state", attr, cast(msg.payload))
 
+        elif mqtt_attr in MAP_VEHICLE_CONFIG:
+            attr, cast = MAP_VEHICLE_CONFIG[mqtt_attr]
+            self.update_car_state(car, "vehicle_config", attr, cast(msg.payload))
+
+        elif mqtt_attr in MAP_SOFTWARE_UPDATE:
+            attr, cast = MAP_SOFTWARE_UPDATE[mqtt_attr]
+            self.update_software_update(car, attr, cast(msg.payload))
+
+        elif mqtt_attr == "active_route":
+            self.update_active_route(car, msg.payload)
+
         elif mqtt_attr == "state":
             state = msg.payload
             self.update_car_state(car, None, "state", state)
@@ -350,6 +441,63 @@ class TeslaMate:
     def update_charging_state(self, car: TeslaCar, val: str):
         """Update charging state."""
         self.update_car_state(car, "charge_state", "charging_state", val)
+
+    @staticmethod
+    def update_software_update(car: TeslaCar, attr: str, value) -> None:
+        """Merge a value into the nested ``software_update`` dict.
+
+        TeslaMate publishes update details across several topics
+        (``update_version``, ``download_perc``, ``install_perc``) while the
+        Tesla API groups them into a single ``software_update`` object inside
+        ``vehicle_state``. Merge rather than overwrite so partial updates from
+        individual topics don't clobber previously received fields.
+        """
+        # pylint: disable=protected-access
+        vehicle_state = car._vehicle_data.setdefault("vehicle_state", {})
+        software_update = vehicle_state.setdefault("software_update", {})
+        software_update[attr] = value
+        logger.debug(
+            "Updating software_update '%s' to '%s' for VIN:%s", attr, value, car.vin
+        )
+
+    def update_active_route(self, car: TeslaCar, payload: str) -> None:
+        """Parse the ``active_route`` JSON blob into drive_state attributes.
+
+        The blob contains navigation details (destination, distance, ETA and
+        destination coordinates). When no route is active TeslaMate publishes
+        ``{"error": "No active route available"}``; in that case all route
+        attributes are cleared to ``None``.
+        """
+        try:
+            data = json.loads(payload)
+        except (ValueError, TypeError):
+            logger.debug("Could not parse active_route payload for VIN:%s", car.vin)
+            return
+
+        if not isinstance(data, dict):
+            return
+
+        if data.get("error"):
+            # No active route: clear all route attributes.
+            for attr in MAP_ACTIVE_ROUTE.values():
+                self.update_car_state(car, "drive_state", attr, None)
+            self.update_car_state(car, "drive_state", "active_route_latitude", None)
+            self.update_car_state(car, "drive_state", "active_route_longitude", None)
+            return
+
+        for key, attr in MAP_ACTIVE_ROUTE.items():
+            if key in data:
+                self.update_car_state(car, "drive_state", attr, data[key])
+
+        location = data.get("location") or {}
+        if "latitude" in location:
+            self.update_car_state(
+                car, "drive_state", "active_route_latitude", location["latitude"]
+            )
+        if "longitude" in location:
+            self.update_car_state(
+                car, "drive_state", "active_route_longitude", location["longitude"]
+            )
 
     @staticmethod
     def update_car_state(car: TeslaCar, sub_path: str, attr: str, value):
