@@ -82,7 +82,7 @@ from teslajsonpy.exceptions import (
 **Main Functionality**:
 
 - OAuth 2.0 authentication
-- Vehicle/site data fetching
+- Vehicle data fetching
 - Command execution (lock, climate, etc.)
 - Error handling and retry logic
 
@@ -95,10 +95,6 @@ api.authenticate(refresh_token)
 # Vehicles
 vehicles = await api.get_vehicles()
 vehicle = await api.get_vehicle(vehicle_id)
-
-# Energy Sites
-sites = await api.get_energy_sites()
-site = await api.get_energy_site(site_id)
 
 # Commands
 await vehicle.lock_doors()
@@ -402,7 +398,7 @@ pytest-httpx = ">=0.24.0"
   "dependencies": ["http"],
   "requirements": ["git+https://github.com/grzesiek1711/teslajsonpy.git@dev"],
   "homeassistant": "2024.11.0",
-  "version": "3.26.3"
+  "version": "4.0.0"
 }
 ```
 
@@ -422,8 +418,6 @@ pytest-httpx = ">=0.24.0"
 ```
 GET  /api/1/vehicles                    # List vehicles
 GET  /api/1/vehicles/{id}/data          # Get vehicle state
-GET  /api/1/energy_sites                # List energy sites
-GET  /api/1/energy_sites/{id}/data      # Get site state
 POST /api/1/vehicles/{id}/command/...   # Execute commands
 ```
 

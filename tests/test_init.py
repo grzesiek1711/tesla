@@ -9,7 +9,6 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr
 import pytest
 from teslajsonpy.car import TeslaCar
-from teslajsonpy.energy import SolarPowerwallSite, SolarSite
 
 from custom_components.tesla_custom import (
     TeslaDataUpdateCoordinator,
@@ -20,12 +19,10 @@ from custom_components.tesla_custom.const import DOMAIN
 
 from .common import setup_platform
 from .const import TEST_USERNAME
-from .mock_data import car as car_mock_data, energysite as energysite_mock_data
+from .mock_data import car as car_mock_data
 
 # Mock data ids used across the helpers below.
 CAR_ID = 12345678901234567  # car_mock_data.VEHICLE["id"]
-SOLAR_SITE_ID = 12345
-BATTERY_SITE_ID = 67890
 
 
 def _make_car() -> TeslaCar:
@@ -34,27 +31,6 @@ def _make_car() -> TeslaCar:
         car_mock_data.VEHICLE,
         MagicMock(),
         car_mock_data.VEHICLE_DATA,
-    )
-
-
-def _make_solar_site() -> SolarSite:
-    """Return a SolarSite built from the shared mock data."""
-    return SolarSite(
-        MagicMock(),
-        energysite_mock_data.ENERGYSITE_SOLAR,
-        energysite_mock_data.SITE_CONFIG_SOLAR,
-        energysite_mock_data.SITE_DATA,
-    )
-
-
-def _make_battery_site() -> SolarPowerwallSite:
-    """Return a SolarPowerwallSite built from the shared mock data."""
-    return SolarPowerwallSite(
-        MagicMock(),
-        energysite_mock_data.ENERGYSITE_BATTERY,
-        energysite_mock_data.SITE_CONFIG_POWERWALL,
-        energysite_mock_data.BATTERY_DATA,
-        energysite_mock_data.BATTERY_SUMMARY,
     )
 
 
@@ -73,27 +49,16 @@ def _config_entry(entry_id: str = "test_entry") -> ConfigEntry:
 
 
 def test_device_identifier_discriminates_by_type() -> None:
-    """device_identifier uses car.id for cars and energysite_id for sites."""
+    """device_identifier uses car.id for cars."""
     car = _make_car()
-    solar = _make_solar_site()
-    battery = _make_battery_site()
 
     assert device_identifier(car) == (DOMAIN, car.id)
-    assert device_identifier(solar) == (DOMAIN, SOLAR_SITE_ID)
-    assert device_identifier(battery) == (DOMAIN, BATTERY_SITE_ID)
-    # Energy sites must not be identified by car-style ``id``.
-    assert device_identifier(solar)[1] == solar.energysite_id
-    assert device_identifier(battery)[1] == battery.energysite_id
 
 
 def _entry_data():
     """Return an entry_data dict shaped like hass.data[DOMAIN][entry_id]."""
     return {
         "cars": {car_mock_data.VIN: _make_car()},
-        "energysites": {
-            SOLAR_SITE_ID: _make_solar_site(),
-            BATTERY_SITE_ID: _make_battery_site(),
-        },
     }
 
 
@@ -111,17 +76,6 @@ async def test_remove_protects_live_car() -> None:
     assert (
         await async_remove_config_entry_device(hass, _config_entry(), device) is False
     )
-
-
-async def test_remove_protects_live_energy_site() -> None:
-    """A device matching a live energy site must not be removable."""
-    hass = _hass_with_entry()
-    for site_id in (SOLAR_SITE_ID, BATTERY_SITE_ID):
-        device = _device_entry((DOMAIN, site_id))
-        assert (
-            await async_remove_config_entry_device(hass, _config_entry(), device)
-            is False
-        )
 
 
 async def test_remove_allows_orphan_device() -> None:
@@ -185,8 +139,8 @@ async def test_remove_with_real_loaded_entry(
 ) -> None:
     """Integration test using the real setup fixture and device registry.
 
-    Verifies the live car and energy-site devices created by setup are
-    protected, while an orphaned device under the same entry is removable.
+    Verifies the live car device created by setup is protected, while an
+    orphaned device under the same entry is removable.
     """
     mock_entry, _ = await setup_platform(hass, platform)
 
@@ -198,9 +152,7 @@ async def test_remove_with_real_loaded_entry(
     assert await async_remove_config_entry_device(hass, mock_entry, car_device) is False
 
     # Every device the platform actually registered for this entry is live and
-    # must be protected. Which energy sites register depends on the platform
-    # (e.g. binary_sensor only creates entities for battery sites), so enumerate
-    # the registry rather than assuming a fixed set.
+    # must be protected. Enumerate the registry rather than assuming a fixed set.
     entry_devices = dr.async_entries_for_config_entry(
         device_registry, mock_entry.entry_id
     )
@@ -250,7 +202,7 @@ async def test_update_vehicles_key_error_reloads_entry(hass: HomeAssistant) -> N
     assert await coordinator._async_update_data() is None
 
     controller.update.assert_awaited_once_with(
-        vins=set(), energy_site_ids=set(), update_vehicles=True
+        vins=set(), update_vehicles=True
     )
     hass.config_entries.async_reload.assert_awaited_once_with("test_entry")
 

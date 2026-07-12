@@ -3,10 +3,10 @@
 ## Project Overview
 
 **Name**: Tesla Custom Integration  
-**Version**: 3.26.3  
+**Version**: 4.0.0  
 **License**: Apache-2.0  
 **Repository**: https://github.com/alandtse/tesla  
-**Domain**: Home Assistant custom component for Tesla vehicles and energy sites
+**Domain**: Home Assistant custom component for Tesla vehicles
 
 This is a fork of the official Home Assistant Tesla integration, maintained as a community project after the official integration was removed due to Tesla API login issues.
 
@@ -15,7 +15,6 @@ This is a fork of the official Home Assistant Tesla integration, maintained as a
 Provides comprehensive Home Assistant integration for:
 
 - **Tesla Vehicles**: Real-time state, climate control, charging, vehicle commands
-- **Energy Sites**: Powerwall status, solar generation, grid interaction, load management
 
 The integration uses cloud polling with intelligent sleep strategies to minimize battery drain while keeping data current.
 
@@ -40,7 +39,7 @@ Programming Language: Python (100%)
 Component Breakdown:
 - Core Integration: 19 Python modules
 - Tests: 13 test modules
-- Mock Data: 2 mock data modules
+- Mock Data: 1 mock data module
 - Configuration: 5+ config/manifest files
 ```
 
@@ -78,8 +77,7 @@ tesla/
 │   ├── common.py                       # Test utilities
 │   ├── test_*.py                       # Test modules (one per entity type)
 │   └── mock_data/                      # Mock Tesla API responses
-│       ├── car.py                      # Mock car data
-│       └── energysite.py               # Mock energy site data
+│       └── car.py                      # Mock car data
 │
 ├── docs/                               # Documentation (this folder)
 ├── config/                             # Development configuration
@@ -119,11 +117,10 @@ tesla/
 - **Base Classes** (`base.py`):
   - `TeslaBaseEntity` - Common functionality
   - `TeslaCarEntity` - Vehicle-specific
-  - `TeslaEnergyEntity` - Energy site-specific
 
 - **Platform Modules** (one per entity type):
   - Each implements `async_setup_entry()` to register entities
-  - Uses `TeslaCarEntity` or `TeslaEnergyEntity` as base
+  - Uses `TeslaCarEntity` as base
   - Follows Home Assistant entity framework patterns
 
 ## Core Components
@@ -133,7 +130,7 @@ tesla/
 The central hub for all data operations:
 
 - Manages Tesla API client lifecycle
-- Coordinates periodic polling of all vehicles/sites
+- Coordinates periodic polling of all vehicles
 - Handles vehicle wake-up and sleep logic
 - Distributes updates to all listening entities
 - Implements retry/backoff on API failures
@@ -143,24 +140,19 @@ The central hub for all data operations:
 
 ```
 TeslaBaseEntity (common methods & properties)
-├── TeslaCarEntity (vehicle-specific)
-│   ├── Climate (HVAC control)
-│   ├── Covers (frunk, trunk, windows, sunroof)
-│   ├── Sensors (battery, temperature, range, etc.)
-│   ├── Switches (charger, sentry, polling, etc.)
-│   ├── Buttons (horn, flash, wake, etc.)
-│   ├── Binary Sensors (charging, online, etc.)
-│   ├── Locks (doors, charge port)
-│   ├── Selects (seat heaters, overheat protection)
-│   ├── Numbers (charge limit, amps)
-│   ├── Device Tracker (location)
-│   ├── Update (software version)
-│   └── Text (TeslaMate ID)
-│
-└── TeslaEnergyEntity (Powerwall-specific)
-    ├── Sensors (power, battery, reserve)
-    ├── Switches (modes)
-    └── Selects (operation modes)
+└── TeslaCarEntity (vehicle-specific)
+    ├── Climate (HVAC control)
+    ├── Covers (frunk, trunk, windows, sunroof)
+    ├── Sensors (battery, temperature, range, etc.)
+    ├── Switches (charger, sentry, polling, etc.)
+    ├── Buttons (horn, flash, wake, etc.)
+    ├── Binary Sensors (charging, online, etc.)
+    ├── Locks (doors, charge port)
+    ├── Selects (seat heaters, overheat protection)
+    ├── Numbers (charge limit, amps)
+    ├── Device Tracker (location)
+    ├── Update (software version)
+    └── Text (TeslaMate ID)
 ```
 
 ## Development Tools & Configuration
@@ -208,7 +200,7 @@ prospector                # Full linting
 
 - **teslajsonpy** (custom fork) - Tesla API client library
   - Source: `git+https://github.com/grzesiek1711/teslajsonpy.git@dev`
-  - Provides: OAuth, API endpoints, vehicle/site data structures
+  - Provides: OAuth, API endpoints, vehicle data structures
 - **async-timeout** >=4.0.0 - Timeout management for async operations
 
 ### Dev Dependencies
@@ -276,4 +268,4 @@ prospector                # Full linting
 
 **Integration Class**: Home Assistant Custom Component  
 **Code Quality**: Type hints throughout, async/await patterns, comprehensive tests  
-**Maintenance**: Active (version 3.26.3 as of latest documentation)
+**Maintenance**: Active (version 4.0.0 as of latest documentation)

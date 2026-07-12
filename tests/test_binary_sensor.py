@@ -35,12 +35,6 @@ async def test_registry_entries(hass: HomeAssistant) -> None:
     entry = entity_registry.async_get("binary_sensor.my_model_s_scheduled_departure")
     assert entry.unique_id == f"{car_mock_data.VIN.lower()}_scheduled_departure"
 
-    entry = entity_registry.async_get("binary_sensor.battery_home_battery_charging")
-    assert entry.unique_id == "67890_battery_charging"
-
-    entry = entity_registry.async_get("binary_sensor.battery_home_grid_status")
-    assert entry.unique_id == "67890_grid_status"
-
     entry = entity_registry.async_get("binary_sensor.my_model_s_user_present")
     assert entry.unique_id == f"{car_mock_data.VIN.lower()}_user_present"
 
@@ -123,29 +117,6 @@ async def test_car_asleep(hass: HomeAssistant) -> None:
 
     state = hass.states.get("binary_sensor.my_model_s_asleep")
     assert state.state == STATE_OFF
-
-
-async def test_battery_charging(hass: HomeAssistant) -> None:
-    """Tests energy site battery charging is getting the correct value."""
-    await setup_platform(hass, BINARY_SENSOR_DOMAIN)
-
-    state = hass.states.get("binary_sensor.battery_home_battery_charging")
-    assert state.state == STATE_OFF
-
-    assert (
-        state.attributes.get(ATTR_DEVICE_CLASS)
-        == BinarySensorDeviceClass.BATTERY_CHARGING
-    )
-
-
-async def test_grid_status(hass: HomeAssistant) -> None:
-    """Tests energy site grid status is getting the correct value."""
-    await setup_platform(hass, BINARY_SENSOR_DOMAIN)
-
-    state = hass.states.get("binary_sensor.battery_home_grid_status")
-    assert state.state == STATE_ON
-
-    assert state.attributes.get(ATTR_DEVICE_CLASS) == BinarySensorDeviceClass.POWER
 
 
 async def test_car_doors(hass: HomeAssistant) -> None:

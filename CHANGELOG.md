@@ -2,6 +2,14 @@
 
 
 
+## v4.0.0 (2026-07-12)
+
+### Breaking
+
+* breaking: remove Tesla Energy Site (Powerwall/Solar) support; the integration now manages Tesla vehicles only. All energy-site entities (battery, solar/grid/load power sensors, backup reserve, operation mode, export rule, grid charging/status) and the "Include Energy Sites" setup option have been removed. Users who need Powerwall support should remain on the 3.x line.
+
+
+
 ## v3.25.2 (2025-07-28)
 
 ### Build

@@ -6,10 +6,9 @@ from homeassistant.components.select import SelectEntity
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import EntityCategory
 from teslajsonpy.car import TeslaCar
-from teslajsonpy.const import RESOURCE_TYPE_BATTERY
 
 from . import TeslaDataUpdateCoordinator
-from .base import TeslaCarEntity, TeslaEnergyEntity
+from .base import TeslaCarEntity
 from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
@@ -18,17 +17,6 @@ CABIN_OPTIONS = [
     "Off",
     "No A/C",
     "On",
-]
-
-EXPORT_RULE = [
-    "Nothing",
-    "Solar",
-    "Everything",
-]
-
-GRID_CHARGING = [
-    "Yes",
-    "No",
 ]
 
 HEATER_OPTIONS = [
@@ -66,12 +54,6 @@ STEERING_HEATER_OPTIONS = [
 
 STEERING_HEATER_OPTIONS_MAP = {"Off": 0, "Low": 1, "High": 3}
 
-OPERATION_MODE = [
-    "Self-Powered",
-    "Time-Based Control",
-    "Backup",
-]
-
 SEAT_ID_MAP = {
     "left": 0,
     "right": 1,
@@ -94,7 +76,6 @@ async def async_setup_entry(hass: HomeAssistant, config_entry, async_add_entitie
     entry_data = hass.data[DOMAIN][config_entry.entry_id]
     coordinators = entry_data["coordinators"]
     cars = entry_data["cars"]
-    energysites = entry_data["energysites"]
     entities = []
 
     for vin, car in cars.items():
@@ -114,14 +95,6 @@ async def async_setup_entry(hass: HomeAssistant, config_entry, async_add_entitie
                 continue
             _LOGGER.debug("Setting up seat %s.", seat_name)
             entities.append(TeslaCarHeatedSeat(car, coordinator, seat_name))
-
-    for energy_site_id, energysite in energysites.items():
-        coordinator = coordinators[energy_site_id]
-        if energysite.resource_type == RESOURCE_TYPE_BATTERY:
-            entities.append(TeslaEnergyOperationMode(energysite, coordinator))
-        if energysite.resource_type == RESOURCE_TYPE_BATTERY and energysite.has_solar:
-            entities.append(TeslaEnergyExportRule(energysite, coordinator))
-            entities.append(TeslaEnergyGridCharging(energysite, coordinator))
 
     async_add_entities(entities, update_before_add=True)
 
@@ -369,92 +342,3 @@ class TeslaCarCabinOverheatProtection(TeslaCarEntity, SelectEntity):
         """Return current cabin overheat protection setting."""
         return self._car.cabin_overheat_protection
 
-
-class TeslaEnergyGridCharging(TeslaEnergyEntity, SelectEntity):
-    """Representation of a Tesla energy site grid charging select."""
-
-    type = "grid charging"
-    _attr_options = GRID_CHARGING
-
-    async def async_select_option(self, option: str, **kwargs):
-        """Change the selected option."""
-        if option == GRID_CHARGING[0]:
-            await self._energysite.set_grid_charging(True)
-        else:
-            await self._energysite.set_grid_charging(False)
-
-        self.async_write_ha_state()
-
-    @property
-    def current_option(self):
-        """Return current grid charging setting."""
-        if self._energysite.grid_charging:
-            return GRID_CHARGING[0]
-        return GRID_CHARGING[1]
-
-    @property
-    def icon(self):
-        """Return icon for the grid charging."""
-        if self._energysite.grid_charging:
-            return "mdi:transmission-tower-export"
-        return "mdi:transmission-tower-off"
-
-
-class TeslaEnergyExportRule(TeslaEnergyEntity, SelectEntity):
-    """Representation of a Tesla energy site energy export rule select."""
-
-    type = "energy exports"
-    _attr_options = EXPORT_RULE
-    _attr_icon = "mdi:home-export-outline"
-
-    async def async_select_option(self, option: str, **kwargs):
-        """Change the selected option."""
-        if option == EXPORT_RULE[0]:
-            await self._energysite.set_export_rule("never")
-        if option == EXPORT_RULE[1]:
-            await self._energysite.set_export_rule("pv_only")
-        if option == EXPORT_RULE[2]:
-            await self._energysite.set_export_rule("battery_ok")
-
-        self.async_write_ha_state()
-
-    @property
-    def current_option(self) -> str:
-        """Return current energy export rule setting."""
-        if self._energysite.export_rule == "never":
-            return EXPORT_RULE[0]
-        if self._energysite.export_rule == "pv_only":
-            return EXPORT_RULE[1]
-        if self._energysite.export_rule == "battery_ok":
-            return EXPORT_RULE[2]
-        return ""
-
-
-class TeslaEnergyOperationMode(TeslaEnergyEntity, SelectEntity):
-    """Representation of a Tesla energy site operation mode select."""
-
-    type = "operation mode"
-    _attr_options = OPERATION_MODE
-    _attr_icon = "mdi:home-battery"
-
-    async def async_select_option(self, option: str, **kwargs):
-        """Change the selected option."""
-        if option == OPERATION_MODE[0]:
-            await self._energysite.set_operation_mode("self_consumption")
-        if option == OPERATION_MODE[1]:
-            await self._energysite.set_operation_mode("autonomous")
-        if option == OPERATION_MODE[2]:
-            await self._energysite.set_operation_mode("backup")
-
-        self.async_write_ha_state()
-
-    @property
-    def current_option(self) -> str:
-        """Return current operation mode setting."""
-        if self._energysite.operation_mode == "self_consumption":
-            return OPERATION_MODE[0]
-        if self._energysite.operation_mode == "autonomous":
-            return OPERATION_MODE[1]
-        if self._energysite.operation_mode == "backup":
-            return OPERATION_MODE[2]
-        return ""

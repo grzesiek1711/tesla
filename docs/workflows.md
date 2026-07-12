@@ -62,11 +62,11 @@ sequenceDiagram
     Setup->>Config: Read stored tokens
     Setup->>TDC: Create coordinator
     TDC->>API: Initialize API client
-    TDC->>API: Fetch vehicles & sites
-    API-->>TDC: Vehicle/site list
+    TDC->>API: Fetch vehicles
+    API-->>TDC: Vehicle list
 
     Setup->>Entity: Call async_setup_entry on all platforms
-    Entity->>Entity: Create entities for each vehicle/site
+    Entity->>Entity: Create entities for each vehicle
     Entity-->>HA: Register entities
 
     Setup->>TDC: Start polling loop
@@ -79,8 +79,8 @@ sequenceDiagram
 1. Read OAuth tokens from config entry storage
 2. Create `TeslaDataUpdateCoordinator` instance
 3. Initialize Tesla API client
-4. Fetch initial list of vehicles and energy sites
-5. Create Home Assistant device entries for each vehicle/site
+4. Fetch initial list of vehicles
+5. Create Home Assistant device entries for each vehicle
 6. Call `async_setup_entry()` on all entity platforms (sensor, switch, etc.)
 7. Each platform creates entities for its domain
 8. Start polling loop with configured interval
@@ -153,7 +153,7 @@ graph TD
 - Token format valid
 - API endpoint reachable
 - Token accepted by Tesla API
-- Account has at least one vehicle or site
+- Account has at least one vehicle
 
 ### Step 3: Options Configuration (`async_step_init` in OptionsFlowHandler)
 
@@ -209,8 +209,7 @@ sequenceDiagram
     loop Every polling_interval seconds
         Timer->>Coordinator: Trigger update
         Coordinator->>API: Get vehicles
-        Coordinator->>API: Get energy sites
-        API-->>Coordinator: Vehicle & site data
+        API-->>Coordinator: Vehicle data
         Coordinator->>Cache: Update cache
         Cache-->>Coordinator: Ready
         Coordinator->>Entities: Notify listeners (debounced)
@@ -228,10 +227,7 @@ sequenceDiagram
 2. Call `_async_update_vehicles()`
    - For each vehicle, get latest state via API
    - Cache response with vehicle ID
-3. Call function to get energy sites
-   - For each site, get latest state via API
-   - Cache response with site ID
-4. Return data dict with updated vehicles/sites
+3. Return data dict with updated vehicles
 
 **Error Handling**:
 
@@ -296,11 +292,6 @@ async def async_setup_entry(hass, config_entry, async_add_entities, discovery_in
         # Create temperature sensor
         entities.append(TeslaCarTemp(coordinator, vehicle_id))
         # ... more entities
-
-    # Create entities for each energy site
-    for site_id in coordinator.data.get("energy_sites", []):
-        entities.append(TeslaEnergyBattery(coordinator, site_id))
-        # ... more energy entities
 
     # Register with Home Assistant
     async_add_entities(entities)
@@ -494,11 +485,6 @@ async def async_remove_config_entry_device(config_entry, device_entry):
     for vehicle_id, vehicle in coordinator.data["vehicles"].items():
         if device_entry.name == vehicle.get("display_name"):
             return False  # Can't remove live vehicle
-
-    # Check if device is a live site
-    for site_id, site in coordinator.data["energy_sites"].items():
-        if device_entry.name == site.get("name"):
-            return False  # Can't remove live site
 
     # Device is orphaned, safe to remove
     return True

@@ -36,7 +36,6 @@ from .const import (
     CONF_API_PROXY_URL,
     CONF_ENABLE_TESLAMATE,
     CONF_EXPIRATION,
-    CONF_INCLUDE_ENERGYSITES,
     CONF_INCLUDE_VEHICLES,
     CONF_POLLING_POLICY,
     CONF_WAKE_ON_START,
@@ -191,7 +190,6 @@ async def async_setup_entry(hass, config_entry):
         )
         result = await controller.connect(
             include_vehicles=config.get(CONF_INCLUDE_VEHICLES),
-            include_energysites=config.get(CONF_INCLUDE_ENERGYSITES),
         )
         refresh_token = result["refresh_token"]
         access_token = result["access_token"]
@@ -278,25 +276,6 @@ async def async_setup_entry(hass, config_entry):
 
         return False
 
-    try:
-        energysites = await controller.generate_energysite_objects()
-
-    except TeslaException as ex:
-        await async_client.aclose()
-
-        if ex.message in [
-            "TOO_MANY_REQUESTS",
-            "SERVICE_MAINTENANCE",
-            "UPSTREAM_TIMEOUT",
-        ]:
-            raise ConfigEntryNotReady(
-                f"Temporarily unable to communicate with Tesla API: {ex.message}"
-            ) from ex
-
-        _LOGGER.error("Unable to communicate with Tesla API: %s", ex.message)
-
-        return False
-
     reload_lock = asyncio.Lock()
     _partial_coordinator = partial(
         TeslaDataUpdateCoordinator,
@@ -306,12 +285,8 @@ async def async_setup_entry(hass, config_entry):
         reload_lock=reload_lock,
         update_vehicles=False,
     )
-    energy_coordinators = {
-        energy_site_id: _partial_coordinator(energy_site_id=energy_site_id)
-        for energy_site_id in energysites
-    }
     car_coordinators = {vin: _partial_coordinator(vin=vin) for vin in cars}
-    coordinators = {**energy_coordinators, **car_coordinators}
+    coordinators = {**car_coordinators}
 
     if car_coordinators:
         update_vehicles_coordinator = _partial_coordinator(update_vehicles=True)
@@ -343,7 +318,6 @@ async def async_setup_entry(hass, config_entry):
         "controller": controller,
         "coordinators": coordinators,
         "cars": cars,
-        "energysites": energysites,
         "teslamate": teslamate,
         DATA_LISTENER: [config_entry.add_update_listener(update_listener)],
     }
@@ -392,9 +366,8 @@ async def async_remove_config_entry_device(
 
     Allow removal only for devices that are no longer provided by the
     integration (e.g. a vehicle that was removed from the Tesla account). The
-    live car(s) and energy site(s) are protected from deletion. Removal is
-    refused while the entry is not loaded, since we cannot then confirm what is
-    currently provided.
+    live car(s) are protected from deletion. Removal is refused while the entry
+    is not loaded, since we cannot then confirm what is currently provided.
     """
     # Imported lazily to avoid a circular import: base imports
     # TeslaDataUpdateCoordinator from this module at top level.
@@ -406,7 +379,6 @@ async def async_remove_config_entry_device(
     provided = {
         device_identifier(tesla_device)
         for tesla_device in list((entry_data.get("cars") or {}).values())
-        + list((entry_data.get("energysites") or {}).values())
     }
     return not device_entry.identifiers.intersection(provided)
 
@@ -444,7 +416,6 @@ class TeslaDataUpdateCoordinator(DataUpdateCoordinator):
         controller: TeslaAPI,
         reload_lock: asyncio.Lock,
         vin: str | None = None,
-        energy_site_id: str | None = None,
         update_vehicles: bool = False,
     ) -> None:
         """Initialize global Tesla data updater."""
@@ -453,8 +424,6 @@ class TeslaDataUpdateCoordinator(DataUpdateCoordinator):
         self.reload_lock = reload_lock
         self.vin = vin
         self.vins = {vin} if vin else set()
-        self.energy_site_id = energy_site_id
-        self.energy_site_ids = {energy_site_id} if energy_site_id else set()
         self.update_vehicles = update_vehicles
         self._cancel_debounce_timer = None
         self._last_update_time = None
@@ -494,7 +463,6 @@ class TeslaDataUpdateCoordinator(DataUpdateCoordinator):
                 _LOGGER.debug("Running controller.update()")
                 data = await controller.update(
                     vins=self.vins,
-                    energy_site_ids=self.energy_site_ids,
                     update_vehicles=self.update_vehicles,
                 )
         except IncompleteCredentials:

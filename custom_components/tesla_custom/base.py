@@ -1,29 +1,24 @@
-"""Support for Tesla cars and energy sites."""
+"""Support for Tesla cars."""
 
 from homeassistant.core import callback
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.util import slugify
 from teslajsonpy.car import TeslaCar
-from teslajsonpy.const import RESOURCE_TYPE_BATTERY
-from teslajsonpy.energy import EnergySite
 
 from . import TeslaDataUpdateCoordinator
 from .const import ATTRIBUTION, DOMAIN
 
 
-def device_identifier(tesla_device: TeslaCar | EnergySite) -> tuple[str, int]:
-    """Return the (DOMAIN, id) device-registry identifier for a Tesla device.
+def device_identifier(tesla_device: TeslaCar) -> tuple[str, int]:
+    """Return the (DOMAIN, id) device-registry identifier for a Tesla car.
 
     Centralizes device identity so device registration (``device_info``) and
     device removal (``async_remove_config_entry_device``) cannot drift apart.
-    Cars are identified by ``car.id``; energy sites by
-    ``energysite.energysite_id``. Note Home Assistant types identifiers as
+    Cars are identified by ``car.id``. Note Home Assistant types identifiers as
     ``tuple[str, str]``, but the integer ids are kept here so existing
     registered devices are not migrated.
     """
-    if isinstance(tesla_device, EnergySite):
-        return (DOMAIN, tesla_device.energysite_id)
     return (DOMAIN, tesla_device.id)
 
 
@@ -122,28 +117,3 @@ class TeslaCarEntity(TeslaBaseEntity):
         """Return whether the data is from an online vehicle."""
         return self.coordinator.assumed_state
 
-
-class TeslaEnergyEntity(TeslaBaseEntity):
-    """Representation of a Tesla energy device."""
-
-    def __init__(
-        self,
-        energysite: EnergySite,
-        coordinator: TeslaDataUpdateCoordinator,
-    ) -> None:
-        """Initialise the Tesla energy device."""
-        energysite_id = energysite.energysite_id
-        super().__init__(energysite_id, coordinator)
-        self._energysite = energysite
-        if energysite.resource_type == RESOURCE_TYPE_BATTERY:
-            sw_version = energysite.version
-        else:
-            # Non-Powerwall sites do not provide version info
-            sw_version = "Unavailable"
-        self._attr_device_info = DeviceInfo(
-            identifiers={device_identifier(energysite)},
-            manufacturer="Tesla",
-            model=energysite.resource_type.title(),
-            name=energysite.site_name,
-            sw_version=sw_version,
-        )

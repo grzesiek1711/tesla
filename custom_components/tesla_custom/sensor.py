@@ -24,15 +24,10 @@ from homeassistant.helpers.icon import icon_for_battery_level
 from homeassistant.util import dt
 from homeassistant.util.unit_conversion import DistanceConverter
 from teslajsonpy.car import TeslaCar
-from teslajsonpy.const import RESOURCE_TYPE_BATTERY, RESOURCE_TYPE_SOLAR
-from teslajsonpy.energy import EnergySite
 
 from . import TeslaDataUpdateCoordinator
-from .base import TeslaCarEntity, TeslaEnergyEntity
+from .base import TeslaCarEntity
 from .const import DISTANCE_UNITS_KM_HR, DOMAIN
-
-SOLAR_SITE_SENSORS = ["solar power", "grid power", "load power"]
-BATTERY_SITE_SENSORS = SOLAR_SITE_SENSORS + ["battery power"]
 
 TPMS_SENSORS = {
     "TPMS front left": "tpms_pressure_fl",
@@ -54,7 +49,6 @@ async def async_setup_entry(hass: HomeAssistant, config_entry, async_add_entitie
     entry_data = hass.data[DOMAIN][config_entry.entry_id]
     coordinators = entry_data["coordinators"]
     cars = entry_data["cars"]
-    energysites = entry_data["energysites"]
     entities = []
 
     for vin, car in cars.items():
@@ -76,30 +70,6 @@ async def async_setup_entry(hass: HomeAssistant, config_entry, async_add_entitie
         entities.append(TeslaCarDistanceToArrival(car, coordinator))
         entities.append(TeslaCarDataUpdateTime(car, coordinator))
         entities.append(TeslaCarPollingInterval(car, coordinator))
-
-    for energy_site_id, energysite in energysites.items():
-        coordinator = coordinators[energy_site_id]
-        if (
-            energysite.resource_type == RESOURCE_TYPE_SOLAR
-            and energysite.has_load_meter
-        ):
-            for sensor_type in SOLAR_SITE_SENSORS:
-                entities.append(
-                    TeslaEnergyPowerSensor(energysite, coordinator, sensor_type)
-                )
-        elif energysite.resource_type == RESOURCE_TYPE_SOLAR:
-            entities.append(
-                TeslaEnergyPowerSensor(energysite, coordinator, "solar power")
-            )
-
-        if energysite.resource_type == RESOURCE_TYPE_BATTERY:
-            entities.append(TeslaEnergyBattery(energysite, coordinator))
-            entities.append(TeslaEnergyBatteryRemaining(energysite, coordinator))
-            entities.append(TeslaEnergyBackupReserve(energysite, coordinator))
-            for sensor_type in BATTERY_SITE_SENSORS:
-                entities.append(
-                    TeslaEnergyPowerSensor(energysite, coordinator, sensor_type)
-                )
 
     async_add_entities(entities, update_before_add=True)
 
@@ -380,114 +350,6 @@ class TeslaCarTemp(TeslaCarEntity, SensorEntity):
         if self.inside is True:
             return self._car.inside_temp
         return self._car.outside_temp
-
-
-class TeslaEnergyPowerSensor(TeslaEnergyEntity, SensorEntity):
-    """Representation of a Tesla energy power sensor."""
-
-    _attr_device_class = SensorDeviceClass.POWER
-    _attr_state_class = SensorStateClass.MEASUREMENT
-    _attr_native_unit_of_measurement = UnitOfPower.WATT
-
-    def __init__(
-        self,
-        energysite: EnergySite,
-        coordinator: TeslaDataUpdateCoordinator,
-        sensor_type: str,
-    ) -> None:
-        """Initialize power sensor."""
-        self.type = sensor_type
-        if self.type == "solar power":
-            self._attr_icon = "mdi:solar-power-variant"
-        if self.type == "grid power":
-            self._attr_icon = "mdi:transmission-tower"
-        if self.type == "load power":
-            self._attr_icon = "mdi:home-lightning-bolt"
-        if self.type == "battery power":
-            self._attr_icon = "mdi:home-battery"
-        super().__init__(energysite, coordinator)
-
-    @property
-    def native_value(self) -> float:
-        """Return power in Watts."""
-        if self.type == "solar power":
-            return round(self._energysite.solar_power)
-        if self.type == "grid power":
-            return round(self._energysite.grid_power)
-        if self.type == "load power":
-            return round(self._energysite.load_power)
-        if self.type == "battery power":
-            return round(self._energysite.battery_power)
-        return 0
-
-
-class TeslaEnergyBattery(TeslaEnergyEntity, SensorEntity):
-    """Representation of the Tesla energy battery sensor."""
-
-    type = "battery"
-    _attr_device_class = SensorDeviceClass.BATTERY
-    _attr_state_class = SensorStateClass.MEASUREMENT
-    _attr_native_unit_of_measurement = PERCENTAGE
-
-    @staticmethod
-    def has_battery() -> bool:
-        """Return whether the device has a battery."""
-        return True
-
-    @property
-    def native_value(self) -> int:
-        """Return battery level."""
-        return round(self._energysite.percentage_charged)
-
-    @property
-    def icon(self):
-        """Return icon for the battery."""
-        charging = self._energysite.battery_power < -100
-
-        return icon_for_battery_level(
-            battery_level=self.native_value, charging=charging
-        )
-
-
-class TeslaEnergyBatteryRemaining(TeslaEnergyEntity, SensorEntity):
-    """Representation of a Tesla energy battery remaining sensor."""
-
-    type = "battery remaining"
-    _attr_device_class = SensorDeviceClass.ENERGY_STORAGE
-    _attr_state_class = SensorStateClass.MEASUREMENT
-    _attr_native_unit_of_measurement = UnitOfEnergy.WATT_HOUR
-
-    @property
-    def native_value(self) -> int:
-        """Return battery energy remaining."""
-        return round(self._energysite.energy_left)
-
-    @property
-    def icon(self):
-        """Return icon for the battery remaining."""
-        charging = self._energysite.battery_power < -100
-
-        return icon_for_battery_level(
-            battery_level=self._energysite.percentage_charged, charging=charging
-        )
-
-
-class TeslaEnergyBackupReserve(TeslaEnergyEntity, SensorEntity):
-    """Representation of a Tesla energy backup reserve sensor."""
-
-    type = "backup reserve"
-    _attr_state_class = SensorStateClass.MEASUREMENT
-    _attr_native_unit_of_measurement = PERCENTAGE
-
-    @property
-    def native_value(self) -> int:
-        """Return backup reserve level."""
-        return round(self._energysite.backup_reserve_percent)
-
-    @property
-    def icon(self):
-        """Return icon for the backup reserve."""
-        return icon_for_battery_level(battery_level=self.native_value)
 
 
 class TeslaCarTimeChargeComplete(TeslaCarEntity, SensorEntity):

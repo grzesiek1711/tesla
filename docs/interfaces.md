@@ -27,7 +27,6 @@ graph TB
 ```python
 coordinator.data: Dict = {
     "vehicles": List[Dict],  # All associated vehicles
-    "energy_sites": List[Dict],  # All Powerwall sites
     "last_update": datetime,
 }
 
@@ -38,19 +37,13 @@ coordinator.data: Dict = {
     "state": str,  # "online" or "asleep"
     "response": Dict,  # Latest Tesla API response
 }
-
-# Energy site entry structure
-{
-    "id": str,  # Site ID
-    "response": Dict,  # Latest Tesla API response
-}
 ```
 
 ### Public Properties
 
 | Property              | Type       | Purpose                                |
 | --------------------- | ---------- | -------------------------------------- |
-| `data`                | dict       | Cached state of all vehicles and sites |
+| `data`                | dict       | Cached state of all vehicles           |
 | `api`                 | `TeslaAPI` | Tesla API client from teslajsonpy      |
 | `last_update_success` | bool       | Whether last update succeeded          |
 
@@ -110,14 +103,14 @@ async def async_remove_config_entry_device(
 **Behavior**:
 
 - Checks if device is actively used
-- Prevents removal of live vehicles/sites
+- Prevents removal of live vehicles
 - Allows removal of orphaned devices
 
 ### Internal Methods (Advanced)
 
 #### `_async_update_data()`
 
-**Purpose**: Main update loop - fetches all vehicle/site data
+**Purpose**: Main update loop - fetches all vehicle data
 
 **Called by**: DataUpdateCoordinator polling loop
 
@@ -125,9 +118,8 @@ async def async_remove_config_entry_device(
 
 1. Check if token refresh needed
 2. Fetch all vehicles via `api.get_vehicles()`
-3. Fetch all energy sites via `api.get_energy_sites()`
-4. Cache latest responses
-5. Return data dict
+3. Cache latest responses
+4. Return data dict
 
 **Error Handling**:
 
@@ -218,7 +210,7 @@ async def async_will_remove_from_hass(self) -> None:
 @staticmethod
 def device_identifier(
     coordinator: TeslaDataUpdateCoordinator,
-    vehicle_or_site_id: str,
+    vehicle_id: str,
     entity_type: str
 ) -> tuple:
     """Generate unique device identifier"""
@@ -269,39 +261,6 @@ class TeslaCarSensorExample(TeslaCarEntity, SensorEntity):
         return self.vehicle["response"]["charge_state"]["battery_level"]
 ```
 
-### TeslaEnergyEntity Interface
-
-**Extends**: `TeslaBaseEntity`
-
-**Properties** (provided by base):
-
-```python
-@property
-def site(self) -> Dict:
-    """Return energy site data from coordinator"""
-
-@property
-def site_id(self) -> str:
-    """Return energy site ID"""
-
-@property
-def site_name(self) -> str:
-    """Return user-friendly site name"""
-
-@property
-def device_info(self) -> DeviceInfo:
-    """Return device registration info"""
-```
-
-**Usage Pattern**:
-
-```python
-class TeslaEnergySensorExample(TeslaEnergyEntity, SensorEntity):
-    @property
-    def native_value(self):
-        return self.site["response"]["components"]["battery"]["charge"]
-```
-
 ---
 
 ## 3. Entity Platform Setup Interface
@@ -331,10 +290,6 @@ async def async_setup_entry(hass, config_entry, async_add_entities, discovery_in
     # Create vehicle entities
     for vehicle_id, vehicle_data in coordinator.data["vehicles"].items():
         entities.append(TeslaCarSensorClass(coordinator, vehicle_id, ...))
-
-    # Create energy site entities
-    for site_id, site_data in coordinator.data["energy_sites"].items():
-        entities.append(TeslaEnergySensorClass(coordinator, site_id, ...))
 
     # Register with Home Assistant
     async_add_entities(entities)
@@ -403,12 +358,6 @@ class TeslaAPI:
 
     async def get_vehicle(vehicle_id: str) -> Vehicle:
         """Get vehicle data"""
-
-    async def get_energy_sites() -> List[EnergySite]:
-        """Get all energy sites"""
-
-    async def get_energy_site(site_id: str) -> EnergySite:
-        """Get energy site data"""
 ```
 
 ### Vehicle Object Interface
@@ -430,18 +379,6 @@ class Vehicle:
     async def start_climate() -> dict
     async def stop_climate() -> dict
     # ... and many more commands
-```
-
-### EnergySite Object Interface
-
-```python
-class EnergySite:
-    id: str
-
-    # Data accessors
-    async def get_site_data() -> dict
-    async def set_operation_mode(mode: str) -> dict
-    # ... site commands
 ```
 
 ---
@@ -554,39 +491,6 @@ vehicle["response"] = {
 }
 ```
 
-### Energy Site State Dictionary
-
-```python
-site["response"] = {
-    # Identity
-    "id": int,
-    "site_name": str,
-
-    # Battery state
-    "battery_list": [
-        {
-            "energy_left": float,
-            "energy_ref": float,
-            "energy_max": float,
-            # ... more fields
-        }
-    ],
-
-    # Components & power
-    "components": {
-        "solar": {...},
-        "battery": {...},
-        "grid": {...},
-        "load": {...},
-    },
-
-    # Operations
-    "site_status": {
-        "running": bool,
-    },
-}
-```
-
 ---
 
 ## 8. TeslaMate Integration Interface
@@ -667,12 +571,11 @@ from homeassistant.config_entries import ConfigEntry
 # Coordinator type
 coordinator: TeslaDataUpdateCoordinator
 
-# Vehicle/Site data
+# Vehicle data
 vehicle_data: Dict[str, Any]
-site_data: Dict[str, Any]
 
 # Entity types
-entity: TeslaCarEntity | TeslaEnergyEntity
+entity: TeslaCarEntity
 ```
 
 ### Validation Examples
@@ -699,7 +602,7 @@ SERVICE_SCHEMA = vol.Schema({
 | Home Assistant | Entity Framework | Entity creation, state management |
 | Home Assistant | Config Entry     | Configuration storage, lifecycle  |
 | Home Assistant | Data Coordinator | Update synchronization            |
-| Tesla API      | teslajsonpy      | Vehicle/site data and commands    |
+| Tesla API      | teslajsonpy      | Vehicle data and commands         |
 | TeslaMate      | MQTT             | Real-time data sync               |
 | Automation     | Services         | Runtime configuration changes     |
 
