@@ -1,0 +1,39 @@
+name: Release
+
+# Build the HACS zip and publish it as a GitHub Release asset whenever a
+# version tag is pushed (e.g. `git tag 5.1.1 && git push origin 5.1.1`).
+# HACS downloads `tesla_extended.zip` from the release (see hacs.json).
+
+on:
+  push:
+    tags:
+      - "*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build and publish HACS release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build tesla_extended.zip
+        run: |
+          cd custom_components/tesla_custom
+          zip -r tesla_extended.zip ./
+
+      - name: Publish release with zip asset
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          zip_path="custom_components/tesla_custom/tesla_extended.zip"
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" "$zip_path" --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" "$zip_path" \
+              --title "$GITHUB_REF_NAME" \
+              --generate-notes
+          fi

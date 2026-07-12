@@ -2,6 +2,16 @@
 
 
 
+## v5.1.1 (2026-07-12)
+
+### Build
+
+* build(ci): replace the semantic-release workflow with a simplified, tag-driven release workflow. Pushing a version tag now builds the HACS zip and publishes it as a GitHub Release asset via the GitHub CLI, fixing the "Not Found" upload failure caused by uploading before a release object existed.
+
+* build(hacs): rename the downloadable HACS asset to `tesla_extended.zip` and set the HACS display name to "Tesla Extended". The integration domain/directory remains `tesla_custom` so existing installations keep working.
+
+
+
 ## v5.1.0 (2026-07-12)
 
 ### Feature
