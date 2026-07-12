@@ -37,7 +37,11 @@ class TeslaBaseEntity(CoordinatorEntity[TeslaDataUpdateCoordinator]):
         """Initialise the Tesla device."""
         super().__init__(coordinator)
         self._attr_unique_id = slugify(f"{base_unique_id} {self.type}")
-        self._attr_name = self.type.capitalize()
+        # Use a translation key derived from the entity type so entity names can
+        # be localized (see strings.json / translations/*.json). Leaving
+        # ``_attr_name`` unset lets Home Assistant resolve the name from the
+        # translations, falling back to English (translations/en.json).
+        self._attr_translation_key = slugify(self.type)
         self._attr_entity_registry_enabled_default = self._enabled_by_default
 
 

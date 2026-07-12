@@ -111,8 +111,6 @@ class TeslaConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             {
                 vol.Required(CONF_USERNAME, default=self.username): str,
                 vol.Required(CONF_TOKEN): str,
-                vol.Required(CONF_DOMAIN, default=AUTH_DOMAIN): str,
-                vol.Required(CONF_INCLUDE_VEHICLES, default=True): bool,
             }
         )
 
@@ -198,8 +196,8 @@ async def validate_input(hass: core.HomeAssistant, data) -> dict:
         config[CONF_ACCESS_TOKEN] = result[CONF_ACCESS_TOKEN]
         config[CONF_EXPIRATION] = result[CONF_EXPIRATION]
         config[CONF_USERNAME] = data[CONF_USERNAME]
-        config[CONF_DOMAIN] = data.get(CONF_DOMAIN, AUTH_DOMAIN)
-        config[CONF_INCLUDE_VEHICLES] = data[CONF_INCLUDE_VEHICLES]
+        config[CONF_DOMAIN] = AUTH_DOMAIN
+        config[CONF_INCLUDE_VEHICLES] = True
 
     except IncompleteCredentials as ex:
         _LOGGER.error("Authentication error: %s %s", ex.message, ex)

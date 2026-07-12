@@ -1,4 +1,4 @@
-# Tesla Custom Integration
+# Tesla Extended
 
 [![GitHub Release][releases-shield]][releases]
 ![GitHub all releases][download-all]
@@ -67,11 +67,11 @@ To use this integration, you need a Tesla refresh token (from your Tesla account
 
 1. Open HACS in Home Assistant
 2. Go to **Integrations** → **Explore & Add Repositories**
-3. Search for "Tesla Custom Integration"
+3. Search for "Tesla Extended"
 4. Add repository: `https://github.com/alandtse/tesla`
 5. Click **Install**
 6. Restart Home Assistant
-7. Go to **Settings** → **Devices & Services** → **+** and search for "Tesla Custom Integration"
+7. Go to **Settings** → **Devices & Services** → **+** and search for "Tesla Extended"
 8. Add your Tesla refresh token when prompted
 
 ### Method 2: Manual Installation
@@ -86,10 +86,15 @@ To use this integration, you need a Tesla refresh token (from your Tesla account
 
 ## Quick Setup
 
-1. **Add Integration**: Settings → Devices & Services → + → Tesla Custom
+1. **Add Integration**: Settings → Devices & Services → + → Tesla Extended
 2. **Enter Token**: Paste your Tesla refresh token
 3. **Configure Options**: Set polling interval and wake behavior (or use defaults)
-4. **Done!**: Your vehicles and sites appear automatically
+4. **Done!**: Your vehicles appear automatically
+
+> **Note**: Setup only asks for your account email and refresh token. The
+> integration always includes your vehicles and uses the default Tesla auth
+> domain (`https://auth.tesla.com`), so the former "Include Vehicles" and "Auth
+> Domain" fields are no longer shown.
 
 ---
 
@@ -121,7 +126,7 @@ force data update buttons and the local polling switch.
 - Charge limit %, charging amps, charger current, charger voltage, charger power
 - Energy added in charging session, time to charge complete
 - Cabin overheat protection, climate keeper mode, heated steering wheel level
-- Per-seat heater levels (diagnostic, disabled by default)
+- Per-seat heater levels (diagnostic, enabled by default)
 - Active route destination, arrival time and distance to arrival
 - Shift state, center display state, polling interval, last data update time
 
@@ -132,7 +137,7 @@ force data update buttons and the local polling switch.
 - Doors lock, charge port latch, charge port door
 - Frunk, trunk, sunroof (open/closed)
 - Sentry mode, valet mode, climate on, preconditioning
-- Battery heater, front/rear defroster (diagnostic, disabled by default)
+- Battery heater, front/rear defroster (diagnostic, enabled by default)
 - Scheduled charging, scheduled departure
 
 **Switches**:
@@ -164,6 +169,21 @@ force data update buttons and the local polling switch.
 > lights, HomeLink, remote start, boombox). These required Tesla's signed
 > vehicle-command protocol. Where the state is readable it is now exposed as a
 > sensor or binary sensor above.
+
+> **Note (v5.1.0)**: all diagnostic sensors and binary sensors (per-seat heater
+> levels, passenger temperature setting, battery heater and front/rear
+> defroster) are now enabled by default, so every sensor is visible right after
+> installation.
+
+---
+
+## Localization
+
+Entity names are localized through Home Assistant's translation system. English
+and **Polish (`pl`)** translations are bundled for all entity names and the
+configuration flow. Home Assistant automatically uses the translation matching
+your configured language and falls back to English otherwise. Contributions of
+additional languages are welcome in `custom_components/tesla_custom/translations/`.
 
 ---
 

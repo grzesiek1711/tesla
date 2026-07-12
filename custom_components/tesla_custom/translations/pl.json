@@ -1,22 +1,22 @@
 {
   "config": {
     "abort": {
-      "already_configured": "Konto jest ju\u017c skonfigurowane",
-      "reauth_successful": "Ponowne uwierzytelnienie powiod\u0142o si\u0119"
+      "already_configured": "Konto jest już skonfigurowane",
+      "reauth_successful": "Ponowne uwierzytelnienie powiodło się"
     },
     "error": {
-      "already_configured": "Konto jest ju\u017c skonfigurowane",
-      "cannot_connect": "Nie mo\u017cna nawi\u0105za\u0107 po\u0142\u0105czenia",
+      "already_configured": "Konto jest już skonfigurowane",
+      "cannot_connect": "Nie można nawiązać połączenia",
       "invalid_auth": "Niepoprawne uwierzytelnienie"
     },
     "step": {
       "user": {
         "data": {
-          "password": "Has\u0142o",
-          "username": "Adres e-mail"
+          "username": "Adres e-mail",
+          "token": "Token odświeżania"
         },
-        "description": "Wprowad\u017a dane",
-        "title": "Tesla \u2014 konfiguracja"
+        "description": "Użyj aplikacji 'Auth App for Tesla' na iOS lub 'Tesla Tokens' na Androidzie,\r\n aby utworzyć token odświeżania, a następnie wprowadź go poniżej.\r\n Pojazd(y) zostaną wybudzone na potrzeby konfiguracji.",
+        "title": "Tesla Extended"
       }
     }
   },
@@ -24,10 +24,95 @@
     "step": {
       "init": {
         "data": {
-          "enable_wake_on_start": "Wymu\u015b wybudzenie samochod\u00f3w podczas uruchamiania",
-          "scan_interval": "Cz\u0119stotliwo\u015b\u0107 aktualizacji"
+          "enable_wake_on_start": "Wymuś wybudzenie samochodów podczas uruchamiania",
+          "scan_interval": "Częstotliwość odpytywania (sekundy)",
+          "enable_teslamate": "Synchronizuj dane z TeslaMate przez MQTT"
         }
       }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "battery": { "name": "Poziom baterii" },
+      "energy_added": { "name": "Dodana energia" },
+      "charger_power": { "name": "Moc ładowarki" },
+      "charging_rate": { "name": "Szybkość ładowania" },
+      "odometer": { "name": "Licznik przebiegu" },
+      "shift_state": { "name": "Bieg" },
+      "center_display_state": { "name": "Stan wyświetlacza centralnego" },
+      "range": { "name": "Zasięg" },
+      "temperature_inside": { "name": "Temperatura wewnątrz" },
+      "temperature_outside": { "name": "Temperatura na zewnątrz" },
+      "time_charge_complete": { "name": "Czas zakończenia ładowania" },
+      "tpms_front_left": { "name": "Ciśnienie opony — przód lewy" },
+      "tpms_front_right": { "name": "Ciśnienie opony — przód prawy" },
+      "tpms_rear_left": { "name": "Ciśnienie opony — tył lewy" },
+      "tpms_rear_right": { "name": "Ciśnienie opony — tył prawy" },
+      "arrival_time": { "name": "Czas przybycia" },
+      "distance_to_arrival": { "name": "Odległość do celu" },
+      "data_last_update_time": { "name": "Czas ostatniej aktualizacji danych" },
+      "polling_interval": { "name": "Interwał odpytywania" },
+      "charge_limit": { "name": "Limit ładowania" },
+      "charging_amps": { "name": "Prąd ładowania (żądany)" },
+      "charger_current": { "name": "Prąd ładowarki" },
+      "charger_voltage": { "name": "Napięcie ładowarki" },
+      "driver_temperature_setting": { "name": "Ustawiona temperatura kierowcy" },
+      "passenger_temperature_setting": { "name": "Ustawiona temperatura pasażera" },
+      "cabin_overheat_protection": { "name": "Ochrona przed przegrzaniem kabiny" },
+      "climate_keeper_mode": { "name": "Tryb utrzymania klimatyzacji" },
+      "heated_steering_wheel_level": { "name": "Poziom podgrzewania kierownicy" },
+      "speed": { "name": "Prędkość" },
+      "power": { "name": "Moc" },
+      "heading": { "name": "Kierunek" },
+      "heated_seat_left": { "name": "Podgrzewanie fotela lewego" },
+      "heated_seat_right": { "name": "Podgrzewanie fotela prawego" },
+      "heated_seat_rear_left": { "name": "Podgrzewanie fotela tylnego lewego" },
+      "heated_seat_rear_center": { "name": "Podgrzewanie fotela tylnego środkowego" },
+      "heated_seat_rear_right": { "name": "Podgrzewanie fotela tylnego prawego" },
+      "heated_seat_third_row_left": { "name": "Podgrzewanie fotela trzeciego rzędu lewego" },
+      "heated_seat_third_row_right": { "name": "Podgrzewanie fotela trzeciego rzędu prawego" }
+    },
+    "binary_sensor": {
+      "parking_brake": { "name": "Hamulec postojowy" },
+      "charger": { "name": "Ładowarka podłączona" },
+      "charging": { "name": "Ładowanie" },
+      "online": { "name": "Online" },
+      "asleep": { "name": "Uśpiony" },
+      "doors": { "name": "Drzwi" },
+      "windows": { "name": "Okna" },
+      "scheduled_charging": { "name": "Zaplanowane ładowanie" },
+      "scheduled_departure": { "name": "Zaplanowany wyjazd" },
+      "user_present": { "name": "Użytkownik obecny" },
+      "doors_lock": { "name": "Zamek drzwi" },
+      "charge_port_latch": { "name": "Zatrzask portu ładowania" },
+      "charge_port_door": { "name": "Klapka portu ładowania" },
+      "frunk": { "name": "Bagażnik przedni (frunk)" },
+      "trunk": { "name": "Bagażnik" },
+      "sunroof": { "name": "Szyberdach" },
+      "sentry_mode": { "name": "Tryb Sentry" },
+      "valet_mode": { "name": "Tryb Valet" },
+      "climate": { "name": "Klimatyzacja" },
+      "preconditioning": { "name": "Przygotowanie klimatyczne" },
+      "battery_heater": { "name": "Ogrzewanie baterii" },
+      "front_defroster": { "name": "Odmrażanie przednie" },
+      "rear_defroster": { "name": "Odmrażanie tylne" }
+    },
+    "button": {
+      "wake_up": { "name": "Wybudź" },
+      "force_data_update": { "name": "Wymuś aktualizację danych" }
+    },
+    "switch": {
+      "polling": { "name": "Odpytywanie" }
+    },
+    "device_tracker": {
+      "location_tracker": { "name": "Lokalizacja" },
+      "destination_location_tracker": { "name": "Lokalizacja celu" }
+    },
+    "update": {
+      "software_update": { "name": "Aktualizacja oprogramowania" }
+    },
+    "text": {
+      "teslamate_id": { "name": "Identyfikator TeslaMate" }
     }
   }
 }

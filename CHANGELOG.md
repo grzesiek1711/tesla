@@ -2,6 +2,24 @@
 
 
 
+## v5.1.0 (2026-07-12)
+
+### Feature
+
+* feat: rename the integration to **Tesla Extended**.
+
+* feat: simplify the setup flow. The "Include Vehicles" checkbox and "Auth Domain" field have been removed; the integration now always includes vehicles and uses the default Tesla auth domain (`https://auth.tesla.com`). Setup only asks for the account email and refresh token.
+
+* feat: enable the previously hidden diagnostic entities by default so all sensors are visible after installation: passenger temperature setting, per-seat heater levels, battery heater, and front/rear defroster.
+
+* feat: add translation-key based entity naming so entity names can be localized, and add a full Polish (`pl`) translation for all entity names and the configuration flow.
+
+### Documentation
+
+* docs: update README and AGENTS.md for the rename, the simplified setup flow, the enabled-by-default entities and the new localization support.
+
+
+
 ## v5.0.0 (2026-07-12)
 
 ### Breaking

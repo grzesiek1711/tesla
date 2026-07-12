@@ -13,12 +13,10 @@
       "user": {
         "data": {
           "username": "Email",
-          "token": "Refresh Token",
-          "domain": "Auth Domain",
-          "include_vehicles": "Include Vehicles"
+          "token": "Refresh Token"
         },
         "description": "Use 'Auth App for Tesla' on iOS or 'Tesla Tokens' on Android\r\n to create a refresh token and enter it below.\r\n Vehicle(s) are forced awake for setup.",
-        "title": "Tesla - Configuration"
+        "title": "Tesla Extended"
       }
     }
   },
@@ -92,6 +90,88 @@
           }
         }
       }
+    },
+    "sensor": {
+      "battery": { "name": "Battery" },
+      "energy_added": { "name": "Energy added" },
+      "charger_power": { "name": "Charger power" },
+      "charging_rate": { "name": "Charging rate" },
+      "odometer": { "name": "Odometer" },
+      "shift_state": { "name": "Shift state" },
+      "center_display_state": { "name": "Center display state" },
+      "range": { "name": "Range" },
+      "temperature_inside": { "name": "Temperature (inside)" },
+      "temperature_outside": { "name": "Temperature (outside)" },
+      "time_charge_complete": { "name": "Time charge complete" },
+      "tpms_front_left": { "name": "TPMS front left" },
+      "tpms_front_right": { "name": "TPMS front right" },
+      "tpms_rear_left": { "name": "TPMS rear left" },
+      "tpms_rear_right": { "name": "TPMS rear right" },
+      "arrival_time": { "name": "Arrival time" },
+      "distance_to_arrival": { "name": "Distance to arrival" },
+      "data_last_update_time": { "name": "Data last update time" },
+      "polling_interval": { "name": "Polling interval" },
+      "charge_limit": { "name": "Charge limit" },
+      "charging_amps": { "name": "Charging amps" },
+      "charger_current": { "name": "Charger current" },
+      "charger_voltage": { "name": "Charger voltage" },
+      "driver_temperature_setting": { "name": "Driver temperature setting" },
+      "passenger_temperature_setting": { "name": "Passenger temperature setting" },
+      "cabin_overheat_protection": { "name": "Cabin overheat protection" },
+      "climate_keeper_mode": { "name": "Climate keeper mode" },
+      "heated_steering_wheel_level": { "name": "Heated steering wheel level" },
+      "speed": { "name": "Speed" },
+      "power": { "name": "Power" },
+      "heading": { "name": "Heading" },
+      "heated_seat_left": { "name": "Heated seat left" },
+      "heated_seat_right": { "name": "Heated seat right" },
+      "heated_seat_rear_left": { "name": "Heated seat rear left" },
+      "heated_seat_rear_center": { "name": "Heated seat rear center" },
+      "heated_seat_rear_right": { "name": "Heated seat rear right" },
+      "heated_seat_third_row_left": { "name": "Heated seat third row left" },
+      "heated_seat_third_row_right": { "name": "Heated seat third row right" }
+    },
+    "binary_sensor": {
+      "parking_brake": { "name": "Parking brake" },
+      "charger": { "name": "Charger" },
+      "charging": { "name": "Charging" },
+      "online": { "name": "Online" },
+      "asleep": { "name": "Asleep" },
+      "doors": { "name": "Doors" },
+      "windows": { "name": "Windows" },
+      "scheduled_charging": { "name": "Scheduled charging" },
+      "scheduled_departure": { "name": "Scheduled departure" },
+      "user_present": { "name": "User present" },
+      "doors_lock": { "name": "Doors lock" },
+      "charge_port_latch": { "name": "Charge port latch" },
+      "charge_port_door": { "name": "Charge port door" },
+      "frunk": { "name": "Frunk" },
+      "trunk": { "name": "Trunk" },
+      "sunroof": { "name": "Sunroof" },
+      "sentry_mode": { "name": "Sentry mode" },
+      "valet_mode": { "name": "Valet mode" },
+      "climate": { "name": "Climate" },
+      "preconditioning": { "name": "Preconditioning" },
+      "battery_heater": { "name": "Battery heater" },
+      "front_defroster": { "name": "Front defroster" },
+      "rear_defroster": { "name": "Rear defroster" }
+    },
+    "button": {
+      "wake_up": { "name": "Wake up" },
+      "force_data_update": { "name": "Force data update" }
+    },
+    "switch": {
+      "polling": { "name": "Polling" }
+    },
+    "device_tracker": {
+      "location_tracker": { "name": "Location tracker" },
+      "destination_location_tracker": { "name": "Destination location tracker" }
+    },
+    "update": {
+      "software_update": { "name": "Software update" }
+    },
+    "text": {
+      "teslamate_id": { "name": "TeslaMate ID" }
     }
   }
 }

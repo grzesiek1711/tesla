@@ -679,7 +679,6 @@ class TeslaCarPassengerTempSetting(TeslaCarEntity, SensorEntity):
     _attr_state_class = SensorStateClass.MEASUREMENT
     _attr_native_unit_of_measurement = UnitOfTemperature.CELSIUS
     _attr_icon = "mdi:thermostat"
-    _enabled_by_default = False
 
     @property
     def native_value(self) -> float:
@@ -798,7 +797,6 @@ class TeslaCarSeatHeater(TeslaCarEntity, SensorEntity):
     _attr_state_class = SensorStateClass.MEASUREMENT
     _attr_entity_category = EntityCategory.DIAGNOSTIC
     _attr_icon = "mdi:car-seat-heater"
-    _enabled_by_default = False
 
     def __init__(
         self,

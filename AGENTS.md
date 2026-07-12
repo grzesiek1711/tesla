@@ -210,6 +210,13 @@ The integration uses Home Assistant's `DataUpdateCoordinator`:
 
 - **Vehicle sensors**: `TeslaCar{EntityType}` (e.g., `TeslaCarBattery`)
 - **Base class methods**: Inherit from `TeslaCarEntity`
+- **Localized names**: `TeslaBaseEntity` sets `_attr_translation_key =
+  slugify(self.type)` (instead of `_attr_name`), so entity names are resolved
+  from `strings.json` / `translations/<lang>.json`. Every entity `type` must
+  have a matching `entity.<platform>.<key>.name` entry in `translations/en.json`
+  (the fallback) and, ideally, `translations/pl.json`. Adding a new entity
+  therefore requires adding its name translation, or the entity will fall back
+  to the device-class name.
 
 ### Data Access Pattern
 
@@ -449,7 +456,7 @@ The project includes a Docker dev container (`.devcontainer/`):
 | Property           | Value         |
 | ------------------ | ------------- |
 | **Domain**         | tesla_custom  |
-| **Version**        | 5.0.0         |
+| **Version**        | 5.1.0         |
 | **Min HA Version** | 2024.11.0     |
 | **License**        | Apache-2.0    |
 | **Maintainer**     | @alandtse     |

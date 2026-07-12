@@ -494,7 +494,6 @@ class TeslaCarBatteryHeater(TeslaCarEntity, BinarySensorEntity):
     type = "battery heater"
     _attr_icon = "mdi:heating-coil"
     _attr_device_class = BinarySensorDeviceClass.HEAT
-    _enabled_by_default = False
 
     @property
     def is_on(self):
@@ -508,7 +507,6 @@ class TeslaCarFrontDefroster(TeslaCarEntity, BinarySensorEntity):
     type = "front defroster"
     _attr_icon = "mdi:car-defrost-front"
     _attr_device_class = BinarySensorDeviceClass.HEAT
-    _enabled_by_default = False
 
     @property
     def is_on(self):
@@ -522,7 +520,6 @@ class TeslaCarRearDefroster(TeslaCarEntity, BinarySensorEntity):
     type = "rear defroster"
     _attr_icon = "mdi:car-defrost-rear"
     _attr_device_class = BinarySensorDeviceClass.HEAT
-    _enabled_by_default = False
 
     @property
     def is_on(self):
