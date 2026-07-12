@@ -1,13 +1,15 @@
 """Tests for the Tesla integration setup and device removal."""
 
 import asyncio
-from datetime import datetime
+from datetime import datetime, timedelta
 from unittest.mock import AsyncMock, MagicMock
 
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import CONF_SCAN_INTERVAL
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr
 import pytest
+from pytest_homeassistant_custom_component.common import async_capture_events
 from teslajsonpy.car import TeslaCar
 
 from custom_components.tesla_extended import (
@@ -15,7 +17,12 @@ from custom_components.tesla_extended import (
     async_remove_config_entry_device,
 )
 from custom_components.tesla_extended.base import device_identifier
-from custom_components.tesla_extended.const import DOMAIN
+from custom_components.tesla_extended.const import (
+    CONF_SENTRY_SCAN_INTERVAL,
+    DOMAIN,
+    EVENT_SENTRY_DISPLAY,
+    MIN_SCAN_INTERVAL,
+)
 
 from .common import setup_platform
 from .const import TEST_USERNAME
@@ -45,6 +52,7 @@ def _config_entry(entry_id: str = "test_entry") -> ConfigEntry:
     """Build a minimal ConfigEntry-like object exposing only entry_id."""
     entry = MagicMock(spec=ConfigEntry)
     entry.entry_id = entry_id
+    entry.options = {}
     return entry
 
 
@@ -201,7 +209,9 @@ async def test_update_vehicles_key_error_reloads_entry(hass: HomeAssistant) -> N
 
     assert await coordinator._async_update_data() is None
 
-    controller.update.assert_awaited_once_with(vins=set(), update_vehicles=True)
+    controller.update.assert_awaited_once_with(
+        vins=set(), update_vehicles=True, force=False
+    )
     hass.config_entries.async_reload.assert_awaited_once_with("test_entry")
 
 
@@ -222,3 +232,140 @@ async def test_vehicle_key_error_is_not_swallowed(hass: HomeAssistant) -> None:
         await coordinator._async_update_data()
 
     hass.config_entries.async_reload.assert_not_awaited()
+
+
+# --- Sentry polling interval + sentry-display event ---------------------------
+
+
+def _sentry_car(*, sentry: bool, display, available: bool = True) -> MagicMock:
+    """Return a lightweight car stub for coordinator tests."""
+    car = MagicMock()
+    car.vin = car_mock_data.VIN
+    car.display_name = "My Model S"
+    car.sentry_mode_available = available
+    car.sentry_mode = sentry
+    car.center_display_state = display
+    return car
+
+
+def _interval_controller() -> MagicMock:
+    """Return a controller mock that tracks per-VIN interval overrides."""
+    controller = MagicMock()
+    controller.is_token_refreshed.return_value = False
+    controller.update = AsyncMock(return_value={})
+    controller.get_last_update_time.return_value = datetime.now().timestamp()
+    controller.get_last_wake_up_time.return_value = 0
+    controller.is_car_online.return_value = True
+    controller.update_interval = 660
+    vin_intervals: dict = {}
+
+    def _get(vin=None, car_id=None):
+        return vin_intervals.get(vin, controller.update_interval)
+
+    def _set(vin=None, car_id=None, value=None):
+        if value is None:
+            vin_intervals.pop(vin, None)
+        else:
+            vin_intervals[vin] = value
+
+    controller.get_update_interval_vin.side_effect = _get
+    controller.set_update_interval_vin.side_effect = _set
+    return controller
+
+
+def _make_coordinator(hass, car, controller, options):
+    entry = _config_entry()
+    entry.options = options
+    hass.data.setdefault(DOMAIN, {})[entry.entry_id] = {"cars": {car.vin: car}}
+    return TeslaDataUpdateCoordinator(
+        hass,
+        config_entry=entry,
+        controller=controller,
+        reload_lock=asyncio.Lock(),
+        vin=car.vin,
+    )
+
+
+async def test_sentry_interval_applied_and_cleared(hass: HomeAssistant) -> None:
+    """Sentry mode applies a per-VIN interval + short heartbeat, then clears it."""
+    car = _sentry_car(sentry=True, display=0)
+    controller = _interval_controller()
+    options = {CONF_SCAN_INTERVAL: 660, CONF_SENTRY_SCAN_INTERVAL: 10}
+    coordinator = _make_coordinator(hass, car, controller, options)
+
+    # Sentry active: per-VIN override reflects the sentry interval (so the
+    # polling-interval sensor updates) and the heartbeat shortens; caller forces.
+    assert coordinator._async_apply_scan_interval() is True
+    assert controller.get_update_interval_vin(vin=car.vin) == 10
+    assert coordinator.update_interval == timedelta(seconds=10)
+
+    # Sentry cleared: override we set is removed and heartbeat returns to normal.
+    car.sentry_mode = False
+    assert coordinator._async_apply_scan_interval() is False
+    assert controller.get_update_interval_vin(vin=car.vin) == 660
+    assert coordinator.update_interval == timedelta(seconds=MIN_SCAN_INTERVAL)
+
+
+async def test_manual_interval_override_preserved(hass: HomeAssistant) -> None:
+    """A manual set_update_interval override is not clobbered when sentry is off."""
+    car = _sentry_car(sentry=False, display=0)
+    controller = _interval_controller()
+    options = {CONF_SCAN_INTERVAL: 660, CONF_SENTRY_SCAN_INTERVAL: 10}
+    coordinator = _make_coordinator(hass, car, controller, options)
+
+    controller.set_update_interval_vin(vin=car.vin, value=120)
+    assert coordinator._async_apply_scan_interval() is False
+    assert controller.get_update_interval_vin(vin=car.vin) == 120
+
+
+async def test_sentry_interval_noop_when_equal(hass: HomeAssistant) -> None:
+    """No sentry override when the sentry interval equals the normal interval."""
+    car = _sentry_car(sentry=True, display=0)
+    controller = _interval_controller()
+    options = {CONF_SCAN_INTERVAL: 660, CONF_SENTRY_SCAN_INTERVAL: 660}
+    coordinator = _make_coordinator(hass, car, controller, options)
+
+    assert coordinator._async_apply_scan_interval() is False
+    assert controller.get_update_interval_vin(vin=car.vin) == 660
+
+
+async def test_sentry_display_event_fires_once_and_rearms(
+    hass: HomeAssistant,
+) -> None:
+    """Event fires once on entering sentry+display==7 and re-arms after clearing."""
+    car = _sentry_car(sentry=True, display=7)
+    controller = _interval_controller()
+    coordinator = _make_coordinator(hass, car, controller, {})
+    events = async_capture_events(hass, EVENT_SENTRY_DISPLAY)
+
+    coordinator._fire_sentry_display_event()
+    await hass.async_block_till_done()
+    assert len(events) == 1
+    assert events[0].data["vin"] == car.vin
+    assert events[0].data["center_display_state"] == 7
+    assert events[0].data["sentry_mode"] is True
+
+    # Condition still holds -> no re-fire.
+    coordinator._fire_sentry_display_event()
+    await hass.async_block_till_done()
+    assert len(events) == 1
+
+    # Condition clears then holds again -> fires a second time.
+    car.center_display_state = 0
+    coordinator._fire_sentry_display_event()
+    car.center_display_state = 7
+    coordinator._fire_sentry_display_event()
+    await hass.async_block_till_done()
+    assert len(events) == 2
+
+
+async def test_sentry_display_event_requires_sentry_on(hass: HomeAssistant) -> None:
+    """The event does not fire when the display is 7 but sentry mode is off."""
+    car = _sentry_car(sentry=False, display=7)
+    controller = _interval_controller()
+    coordinator = _make_coordinator(hass, car, controller, {})
+    events = async_capture_events(hass, EVENT_SENTRY_DISPLAY)
+
+    coordinator._fire_sentry_display_event()
+    await hass.async_block_till_done()
+    assert len(events) == 0

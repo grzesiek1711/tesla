@@ -2,6 +2,30 @@
 
 
 
+## v1.3.0 (2026-07-12)
+
+### Feature
+
+* feat(events): fire a `tesla_extended_sentry_display` event on the Home
+  Assistant event bus when a vehicle has sentry mode enabled and its center
+  display changes to state `7`. The event is edge-triggered and carries `vin`,
+  `name`, `sentry_mode` and `center_display_state`. It is evaluated on every
+  car-state change (cloud polling and TeslaMate MQTT), so with MQTT enabled it
+  fires in near real time.
+
+### Fix
+
+* fix(sensor): the "polling interval" sensor now reflects the sentry polling
+  interval as soon as sentry mode activates/deactivates. The interval is applied
+  as a per-VIN override so the sensor reports the value currently in effect.
+
+* fix(polling): honor the sentry polling interval accurately. While sentry mode
+  is active the coordinator heartbeat is shortened to the configured interval
+  and refresh is forced, so a 10s setting refreshes about every 10s instead of
+  drifting to roughly 20s. A manual `set_update_interval` service override is
+  preserved when sentry mode is not active.
+
+
 ## v1.2.0 (2026-07-12)
 
 ### Feature

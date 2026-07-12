@@ -43,8 +43,10 @@ from .const import (
     DEFAULT_SENTRY_SCAN_INTERVAL,
     DEFAULT_WAKE_ON_START,
     DOMAIN,
+    EVENT_SENTRY_DISPLAY,
     MIN_SCAN_INTERVAL,
     PLATFORMS,
+    SENTRY_ALERT_DISPLAY_STATE,
 )
 from .services import async_setup_services, async_unload_services
 from .teslamate import TeslaMate
@@ -412,6 +414,11 @@ class TeslaDataUpdateCoordinator(DataUpdateCoordinator):
         self._last_update_time = None
         self.last_update_time: float | None = None
         self.assumed_state = True
+        # Track whether we applied a per-VIN sentry interval override (so we
+        # only clear overrides we set) and whether the sentry-display event
+        # condition is currently active (for edge-triggered firing).
+        self._sentry_interval_applied = False
+        self._sentry_display_event_active = False
 
         update_interval = timedelta(seconds=MIN_SCAN_INTERVAL)
 
@@ -423,48 +430,128 @@ class TeslaDataUpdateCoordinator(DataUpdateCoordinator):
             update_interval=update_interval,
         )
 
-    @callback
-    def _async_apply_sentry_scan_interval(self) -> None:
-        """Adjust the controller poll interval based on sentry mode.
-
-        When sentry mode is active on any tracked vehicle, the dedicated sentry
-        polling interval is used so events are picked up on the desired cadence;
-        otherwise the normal polling interval applies. The interval is shared by
-        the underlying controller, so the sentry interval takes effect as soon
-        as any vehicle reports sentry mode on.
-        """
-        options = getattr(self.config_entry, "options", None) or {}
-        normal_interval = options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)
-        sentry_interval = options.get(
-            CONF_SENTRY_SCAN_INTERVAL, DEFAULT_SENTRY_SCAN_INTERVAL
-        )
-
-        # No behaviour change if the sentry interval matches the normal one.
-        if sentry_interval == normal_interval:
-            return
-
+    def _get_car(self):
+        """Return the TeslaCar for this coordinator's VIN, if loaded."""
+        if not self.vin:
+            return None
         entry_data = self.hass.data.get(DOMAIN, {}).get(self.config_entry.entry_id, {})
-        cars = entry_data.get("cars", {})
-        sentry_active = any(
-            getattr(car, "sentry_mode_available", False)
-            and getattr(car, "sentry_mode", False)
-            for car in cars.values()
+        return (entry_data.get("cars") or {}).get(self.vin)
+
+    @callback
+    def _async_apply_scan_interval(self) -> bool:
+        """Apply this vehicle's polling interval based on sentry mode.
+
+        While sentry mode is active the dedicated sentry polling interval is
+        applied as a per-VIN override (so ``get_update_interval_vin`` and the
+        "polling interval" sensor reflect it immediately), the coordinator
+        heartbeat is shortened to that interval and updates are forced. Forcing
+        avoids the ~2x aliasing between the fixed coordinator heartbeat and the
+        controller's interval gate, so the effective refresh cadence matches the
+        configured value instead of drifting to roughly twice the interval.
+
+        Returns ``True`` when the sentry interval is active for this vehicle,
+        i.e. the caller should force a refresh this cycle.
+        """
+        if not self.vin:
+            return False
+
+        options = getattr(self.config_entry, "options", None)
+        if not isinstance(options, dict):
+            options = {}
+        normal_interval = int(options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL))
+        sentry_interval = int(
+            options.get(CONF_SENTRY_SCAN_INTERVAL, DEFAULT_SENTRY_SCAN_INTERVAL)
         )
 
-        desired = sentry_interval if sentry_active else normal_interval
-        if self.controller.update_interval != desired:
+        car = self._get_car()
+        sentry_active = bool(
+            car is not None
+            and getattr(car, "sentry_mode_available", False)
+            and getattr(car, "sentry_mode", False)
+            and sentry_interval != normal_interval
+        )
+
+        if sentry_active:
+            # Per-VIN override so the polling-interval sensor reports it at once.
+            if self.controller.get_update_interval_vin(vin=self.vin) != sentry_interval:
+                self.controller.set_update_interval_vin(
+                    vin=self.vin, value=sentry_interval
+                )
+            self._sentry_interval_applied = True
+            heartbeat = max(1, sentry_interval)
+        else:
+            # Only clear an override that we set, so a manual set_update_interval
+            # service call is preserved when sentry mode is not active.
+            if self._sentry_interval_applied:
+                self.controller.set_update_interval_vin(vin=self.vin, value=None)
+                self._sentry_interval_applied = False
+            heartbeat = MIN_SCAN_INTERVAL
+
+        new_interval = timedelta(seconds=heartbeat)
+        if self.update_interval != new_interval:
             _LOGGER.debug(
-                "Adjusting update_interval from %s to %s (sentry_active=%s)",
-                self.controller.update_interval,
-                desired,
+                "%s: coordinator heartbeat -> %ss (sentry_active=%s)",
+                self.vin[-5:],
+                heartbeat,
                 sentry_active,
             )
-            self.controller.update_interval = desired
+            self.update_interval = new_interval
+
+        return sentry_active
+
+    @callback
+    def _fire_sentry_display_event(self) -> None:
+        """Fire an event when sentry mode is on and the center display alerts.
+
+        Edge-triggered: fires once when the vehicle enters the condition
+        (sentry_mode on AND center_display_state == SENTRY_ALERT_DISPLAY_STATE)
+        and re-arms once the condition clears.
+        """
+        car = self._get_car()
+        if car is None:
+            return
+
+        sentry_on = bool(getattr(car, "sentry_mode", False))
+        raw_state = getattr(car, "center_display_state", None)
+        try:
+            display_state = int(raw_state) if raw_state is not None else None
+        except (TypeError, ValueError):
+            display_state = None
+
+        condition = sentry_on and display_state == SENTRY_ALERT_DISPLAY_STATE
+        if condition and not self._sentry_display_event_active:
+            _LOGGER.debug(
+                "%s: firing %s (center_display_state=%s)",
+                self.vin[-5:] if self.vin else "?",
+                EVENT_SENTRY_DISPLAY,
+                display_state,
+            )
+            self.hass.bus.async_fire(
+                EVENT_SENTRY_DISPLAY,
+                {
+                    "vin": car.vin,
+                    "name": car.display_name,
+                    "sentry_mode": sentry_on,
+                    "center_display_state": display_state,
+                },
+            )
+        self._sentry_display_event_active = condition
+
+    @callback
+    def async_process_car_state(self) -> None:
+        """React to a car-state change from any source (polling or TeslaMate).
+
+        Re-applies the sentry polling interval and fires the sentry-display
+        event. Safe to call from the TeslaMate MQTT path so both react in near
+        real time regardless of whether the update came from cloud polling.
+        """
+        self._async_apply_scan_interval()
+        self._fire_sentry_display_event()
 
     async def _async_update_data(self):
         """Fetch data from API endpoint."""
         controller = self.controller
-        self._async_apply_sentry_scan_interval()
+        force = self._async_apply_scan_interval()
         if controller.is_token_refreshed():
             # It doesn't matter which coordinator calls this, as long as there
             # are no awaits in the below code, it will be called only once.
@@ -486,6 +573,7 @@ class TeslaDataUpdateCoordinator(DataUpdateCoordinator):
                 data = await controller.update(
                     vins=self.vins,
                     update_vehicles=self.update_vehicles,
+                    force=force,
                 )
         except IncompleteCredentials:
             if self.reload_lock.locked():
@@ -514,6 +602,7 @@ class TeslaDataUpdateCoordinator(DataUpdateCoordinator):
                     self.last_update_time - controller.get_last_wake_up_time(vin=vin)
                     > controller.update_interval
                 )
+                self._fire_sentry_display_event()
         return data
 
     @callback

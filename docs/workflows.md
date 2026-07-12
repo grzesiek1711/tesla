@@ -255,6 +255,36 @@ def _handle_coordinator_update(self) -> None:
     self.async_write_ha_state()
 ```
 
+### Sentry Mode Polling
+
+While sentry mode is active on a vehicle the coordinator switches that vehicle
+to the configured `sentry_scan_interval` instead of the normal
+`polling_interval`:
+
+1. Apply `sentry_scan_interval` as a **per-VIN override** on the teslajsonpy
+   controller (`controller.set_update_interval_vin`), so the read-only
+   "polling interval" sensor immediately reflects the active interval.
+2. Shorten the coordinator's own heartbeat to that interval and pass
+   `force=True` to `controller.update()`, so the effective refresh cadence
+   matches the configured value (previously it drifted to roughly 2x the
+   interval — e.g. a 10s setting refreshed about every 20s).
+3. When sentry mode is no longer active, restore the normal heartbeat and clear
+   **only** an override the coordinator itself applied, preserving any manual
+   `set_update_interval` service call.
+
+The effective minimum interval is 10 seconds.
+
+### Sentry Display Event
+
+On every car-state change the coordinator evaluates each vehicle and fires the
+`tesla_extended_sentry_display` event on the Home Assistant event bus when
+sentry mode is enabled and `center_display_state == 7`. The event is
+edge-triggered (fired once when the condition becomes true and re-armed after it
+clears) and carries `vin`, `name`, `sentry_mode` and `center_display_state`.
+Because it is evaluated on every car-state change, it fires from both the
+cloud-poll path (Section 3) and the TeslaMate MQTT path (Section 6), so with
+MQTT enabled it fires in near real time.
+
 ---
 
 ## 4. Entity Creation Workflow

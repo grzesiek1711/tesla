@@ -1,62 +1,31 @@
-[![GitHub Release][releases-shield]][releases]
-![GitHub all releases][download-all]
-![GitHub release (latest by SemVer)][download-latest]
-[![GitHub Activity][commits-shield]][commits]
+# Tesla Extended
 
-[![License][license-shield]][license]
+A fork of [alandtse/tesla](https://github.com/alandtse/tesla), the previous
+official Tesla integration in Home Assistant which was removed due to Tesla
+login issues. Do not report issues to Home Assistant.
 
-[![hacs][hacsbadge]][hacs]
-[![Project Maintenance][maintenance-shield]][user_profile]
-[![BuyMeCoffee][buymecoffeebadge]][buymecoffee]
+**Read-only monitoring** for Tesla vehicles: battery and charging, climate,
+location, doors/windows/locks, trunk/frunk, sentry/valet mode, software update
+status and more. Sending commands is not supported because it requires Tesla's
+signed vehicle-command protocol; the only actions are wake up, force data
+update and a local polling switch.
 
-[![Discord][discord-shield]][discord]
-[![Community Forum][forum-shield]][forum]
-
-A fork of the [official Tesla integration](https://www.home-assistant.io/integrations/tesla/) in Home Assistant.
-
-This is the successor to the core app which was removed due to Tesla login issues. Do not report issues to Home Assistant.
-
-To use the component, you will need an application to generate a Tesla refresh token:
+To use the integration you need a Tesla refresh token, which you can generate
+with one of:
 
 - Android: [Tesla Tokens](https://play.google.com/store/apps/details?id=net.leveugle.teslatokens)
 - iOS: [Auth App for Tesla](https://apps.apple.com/us/app/auth-app-for-tesla/id1552058613)
 - TeslaFi: [Tesla v3 API Tokens](https://support.teslafi.com/en/communities/1/topics/16979-tesla-v3-api-tokens)
 - Chromium/Edge: [Chromium Tesla Token Generator](https://github.com/DoctorMcKay/chromium-tesla-token-generator)
-  {% if not installed %}
+
+{% if not installed %}
 
 ## Installation
 
 1. Click install.
-2. Reboot Home Assistant.
-3. Hard refresh browser cache.
-4. [![Add Integration][add-integration-badge]][add-integration] or in the HA UI go to "Configuration" -> "Integrations" click "+" and search for "Tesla Custom Integration".
+2. Restart Home Assistant.
+3. Go to **Settings** → **Devices & Services** → **+ Add Integration** and
+   search for **Tesla Extended**.
+4. Paste your Tesla refresh token when prompted.
 
 {% endif %}
-
-_Component built with [integration_blueprint][integration_blueprint]._
-
-<!---->
-
----
-
-[integration_blueprint]: https://github.com/custom-components/integration_blueprint
-[buymecoffee]: https://www.buymeacoffee.com/alandtse
-[buymecoffeebadge]: https://img.shields.io/badge/buy%20me%20a%20coffee-donate-yellow.svg?style=for-the-badge
-[commits-shield]: https://img.shields.io/github/commit-activity/y/alandtse/tesla.svg?style=for-the-badge
-[commits]: https://github.com/alandtse/tesla/commits/main
-[hacs]: https://github.com/custom-components/hacs
-[hacsbadge]: https://img.shields.io/badge/HACS-Custom-orange.svg?style=for-the-badge
-[discord]: https://discord.gg/Qa5fW2R
-[discord-shield]: https://img.shields.io/discord/330944238910963714.svg?style=for-the-badge
-[forum-shield]: https://img.shields.io/badge/community-forum-brightgreen.svg?style=for-the-badge
-[forum]: https://community.home-assistant.io/
-[license-shield]: https://img.shields.io/github/license/alandtse/tesla.svg?style=for-the-badge
-[license]: LICENSE
-[maintenance-shield]: https://img.shields.io/badge/maintainer-Alan%20Tse%20%40alandtse-blue.svg?style=for-the-badge
-[releases-shield]: https://img.shields.io/github/release/alandtse/tesla.svg?style=for-the-badge
-[releases]: https://github.com/alandtse/tesla/releases
-[user_profile]: https://github.com/alandtse
-[download-all]: https://img.shields.io/github/downloads/alandtse/tesla/total?style=for-the-badge
-[download-latest]: https://img.shields.io/github/downloads/alandtse/tesla/latest/total?style=for-the-badge
-[add-integration]: https://my.home-assistant.io/redirect/config_flow_start?domain=tesla_extended
-[add-integration-badge]: https://my.home-assistant.io/badges/config_flow_start.svg

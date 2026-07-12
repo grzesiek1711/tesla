@@ -436,6 +436,9 @@ class TeslaMate:
 
         coordinator.last_update_time = round(time.time())
         coordinator.assumed_state = False
+        # React to sentry-mode / center-display changes in near real time
+        # (adjust polling interval and fire the sentry-display event).
+        coordinator.async_process_car_state()
         coordinator.async_update_listeners_debounced()
 
     def update_charging_state(self, car: TeslaCar, val: str):

@@ -167,6 +167,31 @@ The integration uses Home Assistant's `DataUpdateCoordinator`:
 - `async_request_refresh()` - Force immediate update
 - `async_update_listeners_debounced()` - Notify entities (debounced)
 
+### Sentry Polling Interval
+
+While a vehicle's sentry mode is active, the coordinator applies the configured
+`sentry_scan_interval` as a **per-VIN override** on the teslajsonpy controller
+(`controller.set_update_interval_vin`), so the read-only "polling interval"
+sensor immediately reflects the active interval. It also shortens the
+coordinator's own heartbeat to that interval and calls `controller.update()`
+with `force=True` so the effective refresh cadence matches the configured
+interval (previously a 10s setting drifted to roughly 20s). When sentry mode is
+no longer active it restores the normal heartbeat and clears **only** an
+override it set itself, preserving any manual `set_update_interval` service
+call. The effective minimum interval is 10 seconds.
+
+### Events
+
+The integration fires `tesla_extended_sentry_display` (const
+`EVENT_SENTRY_DISPLAY`) on the Home Assistant event bus. It is **edge-triggered**
+(fired once when the condition becomes true and re-armed after it clears) when a
+vehicle has sentry mode enabled and `center_display_state` equals
+`SENTRY_ALERT_DISPLAY_STATE = 7`. Event data: `vin`, `name` (display name),
+`sentry_mode` (bool), `center_display_state` (int). The condition is evaluated
+on every car-state change from both the poll path (`_async_update_data`) and the
+TeslaMate MQTT path (`coordinator.async_process_car_state`), so with MQTT
+enabled it fires in near real time.
+
 ### Entity Framework
 
 - All entities inherit from appropriate Home Assistant entity class (SensorEntity, SwitchEntity, etc.)
@@ -448,7 +473,7 @@ The project includes a Docker dev container (`.devcontainer/`):
 | Property           | Value         |
 | ------------------ | ------------- |
 | **Domain**         | tesla_extended  |
-| **Version**        | 1.2.0         |
+| **Version**        | 1.3.0         |
 | **Min HA Version** | 2024.11.0     |
 | **License**        | Apache-2.0    |
 | **Maintainer**     | @alandtse     |

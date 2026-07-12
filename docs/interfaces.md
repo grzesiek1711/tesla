@@ -555,6 +555,41 @@ data:
   interval: 300
 ```
 
+### Fired Events
+
+#### `tesla_extended_sentry_display`
+
+**Fired when** (edge-triggered): a vehicle has **sentry mode enabled** and its
+`center_display_state` changes to `7`. The event fires once when the condition
+becomes true and is re-armed after it clears.
+
+**Event Data**:
+
+| Field                  | Type | Description                        |
+| ---------------------- | ---- | ---------------------------------- |
+| `vin`                  | str  | Vehicle VIN                        |
+| `name`                 | str  | Vehicle display name               |
+| `sentry_mode`          | bool | `true` while sentry mode is active |
+| `center_display_state` | int  | Center display state (`7`)         |
+
+**Timing**: Evaluated on every car-state change. With TeslaMate MQTT sync
+enabled it fires in near real time; with cloud polling only it fires on the
+next poll.
+
+**Example**:
+
+```yaml
+automation:
+  - alias: "Tesla - Sentry display alert"
+    trigger:
+      platform: event
+      event_type: tesla_extended_sentry_display
+    action:
+      - service: notify.mobile_app
+        data:
+          message: "Sentry alert on {{ trigger.event.data.name }}"
+```
+
 ---
 
 ## Type Hints & Validation

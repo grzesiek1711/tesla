@@ -1,6 +1,6 @@
 """Const file for Tesla cars."""
 
-VERSION = "1.2.0"
+VERSION = "1.3.0"
 CONF_EXPIRATION = "expiration"
 CONF_INCLUDE_VEHICLES = "include_vehicles"
 CONF_POLLING_POLICY = "polling_policy"
@@ -16,6 +16,12 @@ DEFAULT_ENABLE_TESLAMATE = False
 DEFAULT_SENTRY_SCAN_INTERVAL = 660
 ERROR_URL_NOT_DETECTED = "url_not_detected"
 MIN_SCAN_INTERVAL = 10
+
+# Home Assistant event fired when a vehicle has sentry mode enabled and its
+# center display switches to the alert state (center_display_state == 7). The
+# event data carries the vin, name and the center_display_state value.
+EVENT_SENTRY_DISPLAY = f"{DOMAIN}_sentry_display"
+SENTRY_ALERT_DISPLAY_STATE = 7
 
 # Command platforms that require Tesla's signed vehicle-command protocol
 # (lock, climate, cover, select, number) have been removed. This integration

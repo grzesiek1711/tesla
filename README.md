@@ -108,11 +108,13 @@ After adding the integration, open its options dialog:
 | **Polling Policy**          | Always  | Always / Connected Only / Conserve | Sleep optimization strategy                                      |
 | **TeslaMate MQTT**          | Off     | On/Off                             | Sync data from TeslaMate (requires MQTT)                         |
 
-> **Sentry polling interval.** When sentry mode is active on any vehicle the
-> integration switches to this interval instead of the normal polling interval,
-> so you can poll more frequently (or less) while the car is guarding itself.
-> Leave it equal to the normal polling interval for unchanged behavior. Note
-> that more frequent polling keeps the car awake and increases battery drain.
+> **Sentry polling interval.** While sentry mode is active on a vehicle the
+> integration polls that vehicle at this interval instead of the normal polling
+> interval, so you can refresh more frequently (or less) while the car is
+> guarding itself. It is applied per vehicle and the "polling interval" sensor
+> reflects the value currently in effect. Leave it equal to the normal polling
+> interval for unchanged behavior. The minimum is 10 seconds; note that more
+> frequent polling keeps the car awake and increases battery drain.
 
 > **TeslaMate MQTT sync (near real-time).** TeslaMate talks to Tesla over a
 > streaming/websocket connection and publishes vehicle data to MQTT far more
@@ -186,6 +188,44 @@ force data update buttons and the local polling switch.
 > **Note**: all diagnostic sensors and binary sensors (per-seat heater levels,
 > passenger temperature setting, battery heater and front/rear defroster) are
 > enabled by default, so every sensor is visible right after installation.
+
+---
+
+## Events
+
+The integration fires a Home Assistant event you can use as an automation
+trigger:
+
+| Event                            | Fired when                                                                                             |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `tesla_extended_sentry_display`  | A vehicle has **sentry mode enabled** and its **center display** changes to state `7` (the alert view) |
+
+The event is edge-triggered (fired once when the condition becomes true and
+re-armed after it clears) and carries this data:
+
+| Field                  | Description                             |
+| ---------------------- | --------------------------------------- |
+| `vin`                  | Vehicle VIN                             |
+| `name`                 | Vehicle display name                    |
+| `sentry_mode`          | `true` while sentry mode is active      |
+| `center_display_state` | The center display state (`7`)          |
+
+When TeslaMate MQTT sync is enabled the event fires in near real time; with
+cloud polling only it fires on the next poll.
+
+**Example Automation**:
+
+```yaml
+automation:
+  - alias: "Tesla - Sentry display alert"
+    trigger:
+      platform: event
+      event_type: tesla_extended_sentry_display
+    action:
+      - service: notify.mobile_app
+        data:
+          message: "Sentry alert on {{ trigger.event.data.name }}"
+```
 
 ---
 
